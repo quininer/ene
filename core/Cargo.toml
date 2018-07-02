@@ -1,12 +1,15 @@
 cargo-features = ["edition"]
 
 [package]
-name = "ene"
+name = "ene-core"
 version = "0.1.0"
 authors = ["quininer <quininer@live.com>"]
 edition = "2018"
 
-[workspace]
-members = [ "core" ]
-
 [dependencies]
+failure = "*"
+subtle = "*"
+rand = "*"
+sha3 = "*"
+digest = "*"
+curve25519-dalek = "*"
