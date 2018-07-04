@@ -20,12 +20,9 @@ use digest::{ Input, ExtendableOutput, XofReader };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
+use crate::key::ristretto_dh::{ SecretKey, PublicKey, Message };
 use crate::define::AeadCipher;
 use crate::Error;
-
-pub type SecretKey = Scalar;
-pub type PublicKey = CompressedRistretto;
-pub type Message = CompressedRistretto;
 
 
 pub fn send<
@@ -34,8 +31,8 @@ pub fn send<
     AEAD: AeadCipher
 >(
     rng: &mut RNG,
-    (ref ida, a, aa): (ID, &SecretKey, &PublicKey),
-    (ref idb, bb): (ID, &PublicKey),
+    (ref ida, SecretKey(a, aa)): (ID, &SecretKey),
+    (ref idb, PublicKey(bb)): (ID, &PublicKey),
     plaintext: &[u8]
 ) -> Result<(Message, Vec<u8>), Error> {
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
@@ -65,16 +62,16 @@ pub fn send<
     let mut ciphertext = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
     AEAD::seal(&aekey, &nonce, &[], plaintext, &mut ciphertext)?;
 
-    Ok((xx, ciphertext))
+    Ok((Message(xx), ciphertext))
 }
 
 pub fn recv<
     ID: AsRef<str>,
     AEAD: AeadCipher
 >(
-    (ref idb, b, bb): (ID, &SecretKey, &PublicKey),
-    (ref ida, aa): (ID, &PublicKey),
-    xx: &Message,
+    (ref idb, SecretKey(b, bb)): (ID, &SecretKey),
+    (ref ida, PublicKey(aa)): (ID, &PublicKey),
+    Message(xx): &Message,
     ciphertext: &[u8]
 ) -> Result<Vec<u8>, Error> {
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
@@ -107,7 +104,7 @@ pub fn recv<
 
 
 #[test]
-fn test_ooake() {
+fn test_proto_ooake() {
     use rand::{ Rng, thread_rng };
     use rand::distributions::Alphanumeric;
     use crate::aead::aes128colm0::Aes128Colm0;
@@ -122,20 +119,24 @@ fn test_ooake() {
     let a_name = "alice@oake.ene";
     let a_sk = Scalar::random(&mut rng);
     let a_pk = (&a_sk * &RISTRETTO_BASEPOINT_TABLE).compress();
+    let a_sk = SecretKey(a_sk, a_pk.clone());
+    let a_pk = PublicKey(a_pk);
 
     let b_name = "bob@oake.ene";
     let b_sk = Scalar::random(&mut rng);
     let b_pk = (&b_sk * &RISTRETTO_BASEPOINT_TABLE).compress();
+    let b_sk = SecretKey(b_sk, b_pk.clone());
+    let b_pk = PublicKey(b_pk);
 
     let (msg, c) = send::<_, _, Aes128Colm0>(
         &mut rng,
-        (a_name, &a_sk, &a_pk),
+        (a_name, &a_sk),
         (b_name, &b_pk),
         m.as_bytes()
     ).unwrap();
 
     let p = recv::<_, Aes128Colm0>(
-        (b_name, &b_sk, &b_pk),
+        (b_name, &b_sk),
         (a_name, &a_pk),
         &msg,
         &c

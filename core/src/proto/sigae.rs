@@ -76,7 +76,6 @@ pub fn send<
 
 pub fn recv<
     ID: AsRef<str>,
-    RNG: Rng + CryptoRng,
     KEX: KeyExchange,
     AEAD: AeadCipher,
 >(
@@ -126,4 +125,48 @@ pub fn recv<
     } else {
         Err(Error::VerificationFailed)
     }
+}
+
+#[test]
+fn test_proto_sigae() {
+    use rand::{ Rng, thread_rng };
+    use rand::distributions::Alphanumeric;
+    use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
+    use curve25519_dalek::scalar::Scalar;
+    use ed25519_dalek::Keypair;
+    use crate::aead::aes128colm0::Aes128Colm0;
+    use crate::key::ristretto_dh;
+
+    let mut rng = thread_rng();
+
+    let m = rng.sample_iter(&Alphanumeric)
+        .take(1024)
+        .fuse()
+        .collect::<String>();
+
+    let a_name = "alice@oake.ene";
+    let a_sk = ed25519::SecretKey(Keypair::generate(&mut rng));
+    let a_pk = ed25519::PublicKey(a_sk.0.public.clone());
+
+    let b_name = "bob@oake.ene";
+    let b_dhsk = Scalar::random(&mut rng);
+    let b_dhpk = (&b_dhsk * &RISTRETTO_BASEPOINT_TABLE).compress();
+    let b_dhsk = ristretto_dh::SecretKey(b_dhsk, b_dhpk.clone());
+    let b_dhpk = ristretto_dh::PublicKey(b_dhpk);
+
+    let (msg, c) = send::<_, _, ristretto_dh::RistrettoDH, Aes128Colm0>(
+        &mut rng,
+        (a_name, &a_sk),
+        (b_name, &b_dhpk),
+        m.as_bytes()
+    ).unwrap();
+
+    let p = recv::<_, ristretto_dh::RistrettoDH, Aes128Colm0>(
+        (b_name, &b_dhsk, &b_dhpk),
+        (a_name, &a_pk),
+        &msg,
+        &c
+    ).unwrap();
+
+    assert_eq!(p, m.as_bytes());
 }

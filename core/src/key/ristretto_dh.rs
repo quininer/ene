@@ -7,9 +7,9 @@ use crate::define::KeyExchange;
 use crate::common::Packing;
 use crate::Error;
 
-pub struct SecretKey(Scalar);
-pub struct PublicKey(CompressedRistretto);
-pub struct Message(CompressedRistretto);
+pub struct SecretKey(pub(crate) Scalar, pub(crate) CompressedRistretto);
+pub struct PublicKey(pub(crate) CompressedRistretto);
+pub struct Message(pub(crate) CompressedRistretto);
 
 pub struct RistrettoDH;
 
@@ -50,7 +50,7 @@ impl KeyExchange for RistrettoDH {
     }
 
     fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, Message(m): &Self::Message) -> Result<(), Error> {
-        let SecretKey(sk) = sk;
+        let SecretKey(sk, _) = sk;
         let m = decompress!(m);
 
         let k = (sk * m).compress();
