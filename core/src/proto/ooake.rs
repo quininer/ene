@@ -1,15 +1,15 @@
 //! One-pass OAKE protocol
 //!
-//! ```
-//! A = g^a                             B = g^b
-//!                 X = g^x
-//!         --------------------------->
+//! ```norun
+//! Party A                                                 Party B
+//!    |                            X                          |
+//!    +------------------------------------------------------>|
+//!    |                                                       |
 //!
-//! Ka = B^(a + ex)
-//!                                     Kb = A^b * X^(eb)
+//! K_A = B^(a + ex)                                        K_B = A^b * X^(eb)
 //!
-//! e = H(IDa, A, IDb, B, X)
-//! K = H(Ka) = H(Kb)
+//! e = H(ID_A, A, ID_B, B, X)
+//! K = H(K_A) = H(K_B)
 //! ```
 //!
 //! * [OAKE: a new family of implicitly authenticated diffie-hellman protocols](http://iiis.tsinghua.edu.cn/show-3800-1.html)
@@ -20,29 +20,27 @@ use digest::{ Input, ExtendableOutput, XofReader };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
-use super::Error;
-
+use crate::define::AeadCipher;
+use crate::Error;
 
 pub type SecretKey = Scalar;
 pub type PublicKey = CompressedRistretto;
 pub type Message = CompressedRistretto;
 
-macro_rules! decompress {
-    ( $e:expr ) => {
-        match $e.decompress() {
-            Some(e) => e,
-            None => return Err(Error::Decompress)
-        }
-    }
-}
 
-
-pub fn send<ID: AsRef<str>, RNG: RngCore + CryptoRng>(
+pub fn send<
+    ID: AsRef<str>,
+    RNG: RngCore + CryptoRng,
+    AEAD: AeadCipher
+>(
     rng: &mut RNG,
     (ref ida, a, aa): (ID, &SecretKey, &PublicKey),
     (ref idb, bb): (ID, &PublicKey),
-    shared: &mut [u8]
-) -> Result<Message, Error> {
+    plaintext: &[u8]
+) -> Result<(Message, Vec<u8>), Error> {
+    let mut aekey = vec![0; AEAD::KEY_LENGTH];
+    let mut nonce = vec![0; AEAD::NONCE_LENGTH];
+
     let x = Scalar::random(rng);
     let xx = (&x * &RISTRETTO_BASEPOINT_TABLE).compress();
 
@@ -60,17 +58,28 @@ pub fn send<ID: AsRef<str>, RNG: RngCore + CryptoRng>(
 
     let mut hasher = Shake256::default();
     hasher.process(k.compress().as_bytes());
-    hasher.xof_result().read(shared);
+    let mut xof = hasher.xof_result();
+    xof.read(&mut aekey);
+    xof.read(&mut nonce);
 
-    Ok(xx)
+    let mut ciphertext = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
+    AEAD::seal(&aekey, &nonce, &[], plaintext, &mut ciphertext)?;
+
+    Ok((xx, ciphertext))
 }
 
-pub fn recv<ID: AsRef<str>>(
+pub fn recv<
+    ID: AsRef<str>,
+    AEAD: AeadCipher
+>(
     (ref idb, b, bb): (ID, &SecretKey, &PublicKey),
     (ref ida, aa): (ID, &PublicKey),
     xx: &Message,
-    shared: &mut [u8]
-) -> Result<(), Error> {
+    ciphertext: &[u8]
+) -> Result<Vec<u8>, Error> {
+    let mut aekey = vec![0; AEAD::KEY_LENGTH];
+    let mut nonce = vec![0; AEAD::NONCE_LENGTH];
+
     let mut hasher = Sha3_512::default();
     hasher.process(ida.as_ref().as_bytes());
     hasher.process(aa.as_bytes());
@@ -86,42 +95,51 @@ pub fn recv<ID: AsRef<str>>(
 
     let mut hasher = Shake256::default();
     hasher.process(k.compress().as_bytes());
-    hasher.xof_result().read(shared);
+    let mut xof = hasher.xof_result();
+    xof.read(&mut aekey);
+    xof.read(&mut nonce);
 
-    Ok(())
+    let mut plaintext = vec![0; ciphertext.len() - AEAD::TAG_LENGTH];
+    AEAD::open(&aekey, &nonce, &[], ciphertext, &mut plaintext)?;
+
+    Ok(plaintext)
 }
 
 
 #[test]
 fn test_ooake() {
-    use rand::thread_rng;
+    use rand::{ Rng, thread_rng };
+    use rand::distributions::Alphanumeric;
+    use crate::aead::aes128colm0::Aes128Colm0;
 
     let mut rng = thread_rng();
+
+    let m = rng.sample_iter(&Alphanumeric)
+        .take(1024)
+        .fuse()
+        .collect::<String>();
 
     let a_name = "alice@oake.ene";
     let a_sk = Scalar::random(&mut rng);
     let a_pk = (&a_sk * &RISTRETTO_BASEPOINT_TABLE).compress();
-    let mut a_key = [0; 32];
 
     let b_name = "bob@oake.ene";
     let b_sk = Scalar::random(&mut rng);
     let b_pk = (&b_sk * &RISTRETTO_BASEPOINT_TABLE).compress();
-    let mut b_key = [0; 32];
 
-    let msg = send(
+    let (msg, c) = send::<_, _, Aes128Colm0>(
         &mut rng,
         (a_name, &a_sk, &a_pk),
         (b_name, &b_pk),
-        &mut a_key
+        m.as_bytes()
     ).unwrap();
 
-    recv(
+    let p = recv::<_, Aes128Colm0>(
         (b_name, &b_sk, &b_pk),
         (a_name, &a_pk),
         &msg,
-        &mut b_key
+        &c
     ).unwrap();
 
-    assert_ne!(a_key, [0; 32]);
-    assert_eq!(a_key, b_key);
+    assert_eq!(p, m.as_bytes());
 }

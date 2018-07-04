@@ -8,8 +8,18 @@ edition = "2018"
 
 [dependencies]
 failure = "*"
-subtle = "*"
+arrayref = "*"
+
 rand = "*"
 sha3 = "*"
 digest = "*"
-curve25519-dalek = "*"
+subtle = "*"
+curve25519-dalek = { version = "*", features = [ "serde" ] }
+ed25519-dalek = { version = "*", features = [ "serde" ] }
+
+generic-array = "*"
+colm = "*"
+aes = "*"
+
+serde = "*"
+serde_cbor = "*"
