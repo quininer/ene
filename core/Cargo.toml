@@ -22,4 +22,5 @@ colm = "*"
 aes = "*"
 
 serde = "*"
+serde_derive = "*"
 serde_cbor = "*"

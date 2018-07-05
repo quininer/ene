@@ -18,7 +18,6 @@ use rand::{ RngCore, CryptoRng };
 use sha3::{ Sha3_512, Shake256 };
 use digest::{ Input, ExtendableOutput, XofReader };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
-use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use crate::key::ristretto_dh::{ SecretKey, PublicKey, Message };
 use crate::define::AeadCipher;
@@ -31,7 +30,7 @@ pub fn send<
     AEAD: AeadCipher
 >(
     rng: &mut RNG,
-    (ref ida, SecretKey(a, aa)): (ID, &SecretKey),
+    (ref ida, SecretKey(a, PublicKey(aa))): (ID, &SecretKey),
     (ref idb, PublicKey(bb)): (ID, &PublicKey),
     plaintext: &[u8]
 ) -> Result<(Message, Vec<u8>), Error> {
@@ -39,17 +38,15 @@ pub fn send<
     let mut nonce = vec![0; AEAD::NONCE_LENGTH];
 
     let x = Scalar::random(rng);
-    let xx = (&x * &RISTRETTO_BASEPOINT_TABLE).compress();
+    let xx = &x * &RISTRETTO_BASEPOINT_TABLE;
 
     let mut hasher = Sha3_512::default();
     hasher.process(ida.as_ref().as_bytes());
-    hasher.process(aa.as_bytes());
+    hasher.process(aa.compress().as_bytes());
     hasher.process(idb.as_ref().as_bytes());
-    hasher.process(bb.as_bytes());
-    hasher.process(xx.as_bytes());
+    hasher.process(bb.compress().as_bytes());
+    hasher.process(xx.compress().as_bytes());
     let e = Scalar::from_hash(hasher);
-
-    let bb = decompress!(bb);
 
     let k = bb * (a + e * x);
 
@@ -69,7 +66,7 @@ pub fn recv<
     ID: AsRef<str>,
     AEAD: AeadCipher
 >(
-    (ref idb, SecretKey(b, bb)): (ID, &SecretKey),
+    (ref idb, SecretKey(b, PublicKey(bb))): (ID, &SecretKey),
     (ref ida, PublicKey(aa)): (ID, &PublicKey),
     Message(xx): &Message,
     ciphertext: &[u8]
@@ -79,14 +76,11 @@ pub fn recv<
 
     let mut hasher = Sha3_512::default();
     hasher.process(ida.as_ref().as_bytes());
-    hasher.process(aa.as_bytes());
+    hasher.process(aa.compress().as_bytes());
     hasher.process(idb.as_ref().as_bytes());
-    hasher.process(bb.as_bytes());
-    hasher.process(xx.as_bytes());
+    hasher.process(bb.compress().as_bytes());
+    hasher.process(xx.compress().as_bytes());
     let e = Scalar::from_hash(hasher);
-
-    let aa = decompress!(aa);
-    let xx = decompress!(xx);
 
     let k = aa * b + xx * (e * b);
 
@@ -117,27 +111,23 @@ fn test_proto_ooake() {
         .collect::<String>();
 
     let a_name = "alice@oake.ene";
-    let a_sk = Scalar::random(&mut rng);
-    let a_pk = (&a_sk * &RISTRETTO_BASEPOINT_TABLE).compress();
-    let a_sk = SecretKey(a_sk, a_pk.clone());
-    let a_pk = PublicKey(a_pk);
+    let a_sk = SecretKey::generate(&mut rng);
+    let a_pk = a_sk.as_public();
 
     let b_name = "bob@oake.ene";
-    let b_sk = Scalar::random(&mut rng);
-    let b_pk = (&b_sk * &RISTRETTO_BASEPOINT_TABLE).compress();
-    let b_sk = SecretKey(b_sk, b_pk.clone());
-    let b_pk = PublicKey(b_pk);
+    let b_sk = SecretKey::generate(&mut rng);
+    let b_pk = b_sk.as_public();
 
     let (msg, c) = send::<_, _, Aes128Colm0>(
         &mut rng,
         (a_name, &a_sk),
-        (b_name, &b_pk),
+        (b_name, b_pk),
         m.as_bytes()
     ).unwrap();
 
     let p = recv::<_, Aes128Colm0>(
         (b_name, &b_sk),
-        (a_name, &a_pk),
+        (a_name, a_pk),
         &msg,
         &c
     ).unwrap();
