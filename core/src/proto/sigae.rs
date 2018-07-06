@@ -34,6 +34,7 @@ pub fn send<
     (ref ida, ed25519::SecretKey(sk)): (ID, &ed25519::SecretKey),
     (ref idb, pk): (ID, &KEX::PublicKey),
     plaintext: &[u8],
+    flag: bool
 ) -> Result<(Message<KEX>, Vec<u8>), Error> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
@@ -58,7 +59,9 @@ pub fn send<
     hasher.input(idb);
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
-    hasher.input(plaintext);
+    if !flag {
+        hasher.input(plaintext);
+    }
     let sig = sk.sign::<Sha3_512>(hasher.result().as_slice());
 
     let mut aad = Vec::with_capacity(ida.len() + idb.len() + 1);
@@ -83,7 +86,8 @@ pub fn recv<
     (ref idb, sk, pk): (ID, &KEX::PrivateKey, &KEX::PublicKey),
     (ref ida, ed25519::PublicKey(pkb)): (ID, &ed25519::PublicKey),
     Message { m, c }: &Message<KEX>,
-    ciphertext: &[u8]
+    ciphertext: &[u8],
+    flag: bool
 ) -> Result<Vec<u8>, Error> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
@@ -119,7 +123,10 @@ pub fn recv<
     hasher.input(idb);
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
-    hasher.input(&plaintext);
+
+    if !flag {
+        hasher.input(&plaintext);
+    }
 
     if pkb.verify::<Sha3_512>(hasher.result().as_slice(), &sig) {
         Ok(plaintext)

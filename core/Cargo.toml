@@ -17,10 +17,13 @@ subtle = "*"
 curve25519-dalek = { version = "*", features = [ "serde" ] }
 ed25519-dalek = { version = "*", features = [ "serde" ] }
 
-generic-array = "*"
+generic-array = "0.9"
 colm = "*"
 aes = "*"
 
 serde = "*"
 serde_derive = "*"
 serde_cbor = "*"
+
+semver = "*"
+siphasher = "*"

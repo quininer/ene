@@ -38,7 +38,7 @@ impl<'de> Deserialize<'de> for PublicKey {
             type Value = PublicKey;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("An ed25519 public key as a 32-byte compressed point, as specified in RFC8032")
+                formatter.write_str("An ed25519 public key as a 32-byte compressed non-zero point, as specified in RFC8032")
             }
 
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<PublicKey, E> where E: de::Error {
@@ -65,7 +65,7 @@ impl<'de> Deserialize<'de> for Signature {
             type Value = Signature;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("An ed25519 public key as a 32-byte compressed point, as specified in RFC8032")
+                formatter.write_str("An ed25519 signature as 64 bytes, as specified in RFC8032.")
             }
 
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Signature, E> where E: de::Error {
