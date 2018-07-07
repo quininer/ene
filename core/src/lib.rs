@@ -27,8 +27,8 @@ pub mod format;
 #[non_exhaustive]
 #[must_use]
 pub enum Error {
-    #[fail(display = "Not allow zero value")]
-    Zero,
+    #[fail(display = "Invalid value")]
+    InvalidValue(&'static str),
 
     #[fail(display = "Invalid length")]
     InvalidLength,

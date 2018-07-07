@@ -5,6 +5,7 @@ use ed25519_dalek::{
     Keypair,
     PublicKey as PublicKey2, Signature as Signature2,
 };
+use crate::common::Packing;
 use crate::Error;
 
 #[derive(Serialize, Deserialize)]
@@ -17,8 +18,19 @@ pub struct PublicKey(pub(crate) PublicKey2);
 pub struct Signature(pub(crate) Signature2);
 
 impl Signature {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Signature, Error> {
-        if bytes.len() == 64 {
+}
+
+impl Packing for Signature {
+    const BYTES_LENGTH: usize = 64;
+
+    fn read_bytes<F, R>(&self, f: F) -> R
+        where F: FnOnce(&[u8]) -> R
+    {
+        f(&self.0.to_bytes())
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        if bytes.len() == Self::BYTES_LENGTH {
             check!(&bytes[..32]);
             check!(&bytes[32..]);
             Ok(Signature(Signature2::from_bytes(bytes)?))
@@ -69,11 +81,11 @@ impl<'de> Deserialize<'de> for Signature {
             }
 
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Signature, E> where E: de::Error {
-                if bytes.len() == 64 {
-                    Signature::from_bytes(bytes)
-                        .map_err(de::Error::custom)
-                } else {
-                    Err(de::Error::invalid_length(bytes.len(), &self))
+                match Signature::from_bytes(bytes) {
+                    Ok(t) => Ok(t),
+                    Err(Error::InvalidLength) => Err(de::Error::invalid_length(bytes.len(), &self)),
+                    Err(Error::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
+                    Err(err) => Err(de::Error::custom(err))
                 }
             }
         }

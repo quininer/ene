@@ -63,14 +63,14 @@ pub fn send<
         hasher.input(plaintext);
     }
     let sig = sk.sign::<Sha3_512>(hasher.result().as_slice());
+    let sig = ed25519::Signature(sig);
 
     let mut aad = Vec::with_capacity(ida.len() + idb.len() + 1);
     aad.extend_from_slice(ida);
     aad.push(0xff);
     aad.extend_from_slice(idb);
-    let sig = sig.to_bytes();
-    let mut c = vec![0; sig.len() + AEAD::TAG_LENGTH];
-    AEAD::seal(&aekey, &nonce, &aad, &sig, &mut c)?;
+    let mut c = vec![0; ed25519::Signature::BYTES_LENGTH + AEAD::TAG_LENGTH];
+    sig.read_bytes(|sig| AEAD::seal(&aekey, &nonce, &aad, &sig, &mut c))?;
 
     let mut c2 = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
     AEAD::seal(&aekey2, &nonce2, &[], plaintext, &mut c2)?;

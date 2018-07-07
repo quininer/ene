@@ -53,16 +53,11 @@ macro_rules! de {
                     fn visit_bytes<E>(self, v: &[u8]) -> Result<$t, E>
                         where E: de::Error
                     {
-                        if v.len() == 32 {
-                            check!(serde v);
-                            let mut arr32 = [0u8; 32];
-                            arr32[0..32].copy_from_slice(v);
-                            CompressedRistretto(arr32)
-                                .decompress()
-                                .map($t)
-                                .ok_or(de::Error::custom("decompression failed"))
-                        } else {
-                            Err(de::Error::invalid_length(v.len(), &self))
+                        match $t::from_bytes(v) {
+                            Ok(t) => Ok(t),
+                            Err(Error::InvalidLength) => Err(de::Error::invalid_length(v.len(), &self)),
+                            Err(Error::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
+                            Err(err) => Err(de::Error::custom(err))
                         }
                     }
                 }
@@ -82,16 +77,48 @@ pub struct RistrettoDH;
 impl Packing for PublicKey {
     const BYTES_LENGTH: usize = 32;
 
-    fn read_bytes<F: FnOnce(&[u8])>(&self, f: F) {
-        f(self.0.compress().as_bytes());
+    fn read_bytes<F, R>(&self, f: F) -> R
+        where F: FnOnce(&[u8]) -> R
+    {
+        f(self.0.compress().as_bytes())
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        if bytes.len() == Self::BYTES_LENGTH {
+            check!(bytes);
+            let mut arr = [0u8; 32];
+            arr.copy_from_slice(bytes);
+            CompressedRistretto(arr)
+                .decompress()
+                .map(PublicKey)
+                .ok_or(Error::InvalidValue("decompression failed"))
+        } else {
+            Err(Error::InvalidLength)
+        }
     }
 }
 
 impl Packing for Message {
     const BYTES_LENGTH: usize = 32;
 
-    fn read_bytes<F: FnOnce(&[u8])>(&self, f: F) {
+    fn read_bytes<F, R>(&self, f: F) -> R
+        where F: FnOnce(&[u8]) -> R
+    {
         f(self.0.compress().as_bytes())
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        if bytes.len() == Self::BYTES_LENGTH {
+            check!(bytes);
+            let mut arr = [0u8; 32];
+            arr.copy_from_slice(bytes);
+            CompressedRistretto(arr)
+                .decompress()
+                .map(Message)
+                .ok_or(Error::InvalidValue("decompression failed"))
+        } else {
+            Err(Error::InvalidLength)
+        }
     }
 }
 
