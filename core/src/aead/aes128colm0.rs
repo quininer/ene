@@ -3,7 +3,7 @@ use aes::{ Aes128, BlockCipher as _ };
 use colm::{ Colm, NONCE_LENGTH };
 use colm::traits::{ KEY_LENGTH, BLOCK_LENGTH, BlockCipher };
 use crate::define::AeadCipher;
-use crate::Error;
+use crate::error;
 
 
 pub struct Aes128Colm0;
@@ -13,13 +13,13 @@ impl AeadCipher for Aes128Colm0 {
     const NONCE_LENGTH: usize = NONCE_LENGTH;
     const TAG_LENGTH: usize = BLOCK_LENGTH;
 
-    fn seal(key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> Result<(), Error> {
+    fn seal(key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> error::Result<()> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
             m.len() + Self::TAG_LENGTH != c.len() ||
             m.is_empty()
         {
-            return Err(Error::InvalidLength)
+            return Err(error::Error::InvalidLength)
         };
 
         let key = array_ref!(key, 0, KEY_LENGTH);
@@ -47,13 +47,13 @@ impl AeadCipher for Aes128Colm0 {
         Ok(())
     }
 
-    fn open(key: &[u8], nonce: &[u8], aad: &[u8], c: &[u8], m: &mut [u8]) -> Result<(), Error> {
+    fn open(key: &[u8], nonce: &[u8], aad: &[u8], c: &[u8], m: &mut [u8]) -> error::Result<()> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
             c.len() - Self::TAG_LENGTH != m.len() ||
             m.is_empty()
         {
-            return Err(Error::InvalidLength)
+            return Err(error::Error::InvalidLength)
         };
 
         let key = array_ref!(key, 0, KEY_LENGTH);
@@ -81,7 +81,7 @@ impl AeadCipher for Aes128Colm0 {
         if flag {
             Ok(())
         } else {
-            Err(Error::VerificationFailed)
+            Err(error::Error::VerificationFailed)
         }
     }
 }

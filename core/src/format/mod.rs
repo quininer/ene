@@ -19,7 +19,7 @@ pub struct Meta<'a>(pub &'a str, pub Option<&'a str>);
 #[derive(Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Protocol {
-    SigOnly(alg::Signature),
+    Sonly(alg::Signature),
     Ooake(alg::KeyExchange, alg::Encrypt),
     Sigae(bool, alg::Signature, alg::KeyExchange, alg::Encrypt)
 }

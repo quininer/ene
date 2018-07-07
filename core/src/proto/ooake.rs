@@ -21,7 +21,7 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::scalar::Scalar;
 use crate::key::ristretto_dh::{ self, SecretKey, PublicKey };
 use crate::define::AeadCipher;
-use crate::Error;
+use crate::error;
 
 
 pub type Message = ristretto_dh::Message;
@@ -35,7 +35,7 @@ pub fn send<
     (ref ida, SecretKey(a, PublicKey(aa))): (ID, &SecretKey),
     (ref idb, PublicKey(bb)): (ID, &PublicKey),
     plaintext: &[u8]
-) -> Result<(Message, Vec<u8>), Error> {
+) -> error::Result<(Message, Vec<u8>)> {
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
     let mut nonce = vec![0; AEAD::NONCE_LENGTH];
 
@@ -72,7 +72,7 @@ pub fn recv<
     (ref ida, PublicKey(aa)): (ID, &PublicKey),
     ristretto_dh::Message(xx): &Message,
     ciphertext: &[u8]
-) -> Result<Vec<u8>, Error> {
+) -> error::Result<Vec<u8>> {
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
     let mut nonce = vec![0; AEAD::NONCE_LENGTH];
 

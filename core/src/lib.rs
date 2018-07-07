@@ -14,34 +14,10 @@ extern crate aes;
 extern crate colm;
 extern crate serde;
 
-
 #[macro_use] pub mod common;
 pub mod define;
 pub mod proto;
 pub mod key;
 pub mod aead;
 pub mod format;
-
-
-#[derive(Debug, Fail)]
-#[non_exhaustive]
-#[must_use]
-pub enum Error {
-    #[fail(display = "Invalid value")]
-    InvalidValue(&'static str),
-
-    #[fail(display = "Invalid length")]
-    InvalidLength,
-
-    #[fail(display = "Ed25519 Decoding Error: {}", _0)]
-    Ed25519(ed25519_dalek::DecodingError),
-
-    #[fail(display = "Fail to pass verification")]
-    VerificationFailed,
-}
-
-impl From<ed25519_dalek::DecodingError> for Error {
-    fn from(err: ed25519_dalek::DecodingError) -> Error {
-        Error::Ed25519(err)
-    }
-}
+pub mod error;

@@ -13,9 +13,9 @@ use rand::{ Rng, CryptoRng };
 use sha3::{ Sha3_512, Shake256 };
 use digest::{ Digest, Input, ExtendableOutput, XofReader };
 use crate::key::ed25519;
-use crate::define::{ KeyExchange, AeadCipher };
+use crate::define::{ Signature, KeyExchange, AeadCipher };
 use crate::common::Packing;
-use crate::Error;
+use crate::error;
 
 
 #[derive(Serialize, Deserialize)]
@@ -27,15 +27,16 @@ pub struct Message<KEX: KeyExchange> {
 pub fn send<
     ID: AsRef<str>,
     RNG: Rng + CryptoRng,
+    SIG: Signature,
     KEX: KeyExchange,
     AEAD: AeadCipher
 >(
     rng: &mut RNG,
-    (ref ida, ed25519::SecretKey(sk)): (ID, &ed25519::SecretKey),
+    (ref ida, sk): (ID, &SIG::PrivateKey),
     (ref idb, pk): (ID, &KEX::PublicKey),
     plaintext: &[u8],
     flag: bool
-) -> Result<(Message<KEX>, Vec<u8>), Error> {
+) -> error::Result<(Message<KEX>, Vec<u8>)> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
     let mut nonce = vec![0; AEAD::NONCE_LENGTH];
@@ -62,8 +63,7 @@ pub fn send<
     if !flag {
         hasher.input(plaintext);
     }
-    let sig = sk.sign::<Sha3_512>(hasher.result().as_slice());
-    let sig = ed25519::Signature(sig);
+    let sig = SIG::sign(sk, hasher.result().as_slice());
 
     let mut aad = Vec::with_capacity(ida.len() + idb.len() + 1);
     aad.extend_from_slice(ida);
@@ -80,15 +80,16 @@ pub fn send<
 
 pub fn recv<
     ID: AsRef<str>,
+    SIG: Signature,
     KEX: KeyExchange,
     AEAD: AeadCipher,
 >(
     (ref idb, sk, pk): (ID, &KEX::PrivateKey, &KEX::PublicKey),
-    (ref ida, ed25519::PublicKey(pkb)): (ID, &ed25519::PublicKey),
+    (ref ida, pka): (ID, &SIG::PublicKey),
     Message { m, c }: &Message<KEX>,
     ciphertext: &[u8],
     flag: bool
-) -> Result<Vec<u8>, Error> {
+) -> error::Result<Vec<u8>> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
     let mut nonce = vec![0; AEAD::NONCE_LENGTH];
@@ -112,7 +113,7 @@ pub fn recv<
     aad.extend_from_slice(idb);
     let mut sig = vec![0; c.len() - AEAD::TAG_LENGTH];
     AEAD::open(&aekey, &nonce, &aad, c, &mut sig)?;
-    let ed25519::Signature(sig) = ed25519::Signature::from_bytes(&sig)?;
+    let sig = SIG::Signature::from_bytes(&sig)?;
 
     let mut plaintext = vec![0; ciphertext.len() - AEAD::TAG_LENGTH];
     AEAD::open(&aekey2, &nonce2, &[], &ciphertext, &mut plaintext)?;
@@ -123,15 +124,13 @@ pub fn recv<
     hasher.input(idb);
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
-
     if !flag {
         hasher.input(&plaintext);
     }
-
-    if pkb.verify::<Sha3_512>(hasher.result().as_slice(), &sig) {
+    if SIG::verify(pka, &sig, hasher.result().as_slice()) {
         Ok(plaintext)
     } else {
-        Err(Error::VerificationFailed)
+        Err(error::Error::VerificationFailed)
     }
 }
 

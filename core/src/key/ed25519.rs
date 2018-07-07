@@ -1,12 +1,14 @@
 use std::fmt;
 use serde::{ Deserialize, Deserializer };
 use serde::de::{ self, Visitor };
+use sha3::Sha3_512;
 use ed25519_dalek::{
     Keypair,
     PublicKey as PublicKey2, Signature as Signature2,
 };
+use crate::define::Signature as Signature3;
 use crate::common::Packing;
-use crate::Error;
+use crate::error;
 
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) Keypair);
@@ -27,13 +29,13 @@ impl Packing for Signature {
         f(&self.0.to_bytes())
     }
 
-    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    fn from_bytes(bytes: &[u8]) -> error::Result<Self> {
         if bytes.len() == Self::BYTES_LENGTH {
             check!(&bytes[..32]);
             check!(&bytes[32..]);
             Ok(Signature(Signature2::from_bytes(bytes)?))
         } else {
-            Err(Error::InvalidLength)
+            Err(error::Error::InvalidLength)
         }
     }
 }
@@ -81,13 +83,30 @@ impl<'de> Deserialize<'de> for Signature {
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Signature, E> where E: de::Error {
                 match Signature::from_bytes(bytes) {
                     Ok(t) => Ok(t),
-                    Err(Error::InvalidLength) => Err(de::Error::invalid_length(bytes.len(), &self)),
-                    Err(Error::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
+                    Err(error::Error::InvalidLength) => Err(de::Error::invalid_length(bytes.len(), &self)),
+                    Err(error::Error::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
                     Err(err) => Err(de::Error::custom(err))
                 }
             }
         }
 
         deserializer.deserialize_bytes(SignatureVisitor)
+    }
+}
+
+
+pub struct Ed25519;
+
+impl Signature3 for Ed25519 {
+    type PrivateKey = SecretKey;
+    type PublicKey = PublicKey;
+    type Signature = Signature;
+
+    fn sign(SecretKey(sk): &Self::PrivateKey, message: &[u8]) -> Self::Signature {
+        Signature(sk.sign::<Sha3_512>(message))
+    }
+
+    fn verify(PublicKey(pk): &Self::PublicKey, Signature(sig): &Self::Signature, message: &[u8]) -> bool {
+        pk.verify::<Sha3_512>(message, sig)
     }
 }
