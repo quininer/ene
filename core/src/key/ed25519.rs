@@ -17,8 +17,6 @@ pub struct PublicKey(pub(crate) PublicKey2);
 #[derive(Serialize)]
 pub struct Signature(pub(crate) Signature2);
 
-impl Signature {
-}
 
 impl Packing for Signature {
     const BYTES_LENGTH: usize = 64;
