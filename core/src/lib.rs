@@ -13,6 +13,7 @@ extern crate generic_array;
 extern crate aes;
 extern crate colm;
 extern crate serde;
+extern crate semver;
 
 #[macro_use] pub mod common;
 pub mod define;

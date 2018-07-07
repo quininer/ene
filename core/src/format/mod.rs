@@ -6,15 +6,21 @@ use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
 
 
-pub type Message<'a> = Envelope<(Meta<'a>, Protocol, &'a [u8])>;
+pub type Message<'a> = Envelope<(SendMeta<'a>, Protocol, &'a [u8])>;
 
 pub struct ENE;
 
 #[derive(Serialize, Deserialize)]
-pub struct Envelope<T>(pub ENE, pub u16, pub T);
+pub struct Version(pub u16);
 
 #[derive(Serialize, Deserialize)]
-pub struct Meta<'a>(pub &'a str, pub Option<&'a str>);
+pub struct Envelope<T>(pub ENE, pub Version, pub T);
+
+#[derive(Serialize, Deserialize)]
+pub struct ID(pub String);
+
+#[derive(Serialize, Deserialize)]
+pub struct SendMeta<'a>(pub &'a str, pub Option<&'a str>);
 
 #[derive(Serialize, Deserialize)]
 #[non_exhaustive]
@@ -56,5 +62,12 @@ impl<'de> Deserialize<'de> for ENE {
         }
 
         deserializer.deserialize_bytes(EneVisitor)
+    }
+}
+
+impl Default for Version {
+    fn default() -> Version {
+        let v = semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
+        Version(v.major as _)
     }
 }
