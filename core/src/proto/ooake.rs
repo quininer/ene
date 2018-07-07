@@ -19,10 +19,12 @@ use sha3::{ Sha3_512, Shake256 };
 use digest::{ Input, ExtendableOutput, XofReader };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::scalar::Scalar;
-use crate::key::ristretto_dh::{ SecretKey, PublicKey, Message };
+use crate::key::ristretto_dh::{ self, SecretKey, PublicKey };
 use crate::define::AeadCipher;
 use crate::Error;
 
+
+pub type Message = ristretto_dh::Message;
 
 pub fn send<
     ID: AsRef<str>,
@@ -59,7 +61,7 @@ pub fn send<
     let mut ciphertext = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
     AEAD::seal(&aekey, &nonce, &[], plaintext, &mut ciphertext)?;
 
-    Ok((Message(xx), ciphertext))
+    Ok((ristretto_dh::Message(xx), ciphertext))
 }
 
 pub fn recv<
@@ -68,7 +70,7 @@ pub fn recv<
 >(
     (ref idb, SecretKey(b, PublicKey(bb))): (ID, &SecretKey),
     (ref ida, PublicKey(aa)): (ID, &PublicKey),
-    Message(xx): &Message,
+    ristretto_dh::Message(xx): &Message,
     ciphertext: &[u8]
 ) -> Result<Vec<u8>, Error> {
     let mut aekey = vec![0; AEAD::KEY_LENGTH];

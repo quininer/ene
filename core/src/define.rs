@@ -1,4 +1,5 @@
 use rand::{ Rng, CryptoRng };
+use serde::{ Serialize, Deserialize };
 use crate::common::Packing;
 use crate::Error;
 
@@ -6,7 +7,7 @@ use crate::Error;
 pub trait KeyExchange {
     type PrivateKey;
     type PublicKey: Packing;
-    type Message: Packing;
+    type Message: Packing + Serialize + for<'a> Deserialize<'a>;
 
     const SHARED_LENGTH: usize;
 

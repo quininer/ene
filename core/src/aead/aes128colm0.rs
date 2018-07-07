@@ -125,5 +125,6 @@ fn test_aead_aes128colm0() {
     Aes128Colm0::seal(&key, &nonce, &aad, &m, &mut c).unwrap();
     Aes128Colm0::open(&key, &nonce, &aad, &c, &mut p).unwrap();
 
+    assert_ne!(c, vec![0; m.len()]);
     assert_eq!(p, m);
 }
