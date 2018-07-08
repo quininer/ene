@@ -1,8 +1,16 @@
 use rand::{ Rng, CryptoRng };
 use serde::{ Serialize, Deserialize };
-use crate::common::Packing;
 use crate::error;
 
+
+pub trait Packing: Sized {
+    const BYTES_LENGTH: usize;
+
+    fn read_bytes<F, R>(&self, f: F) -> R
+        where F: FnOnce(&[u8]) -> R;
+
+    fn from_bytes(bytes: &[u8]) -> error::Result<Self>;
+}
 
 pub trait Signature {
     type PrivateKey;

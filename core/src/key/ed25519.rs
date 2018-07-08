@@ -1,4 +1,5 @@
 use std::fmt;
+use rand::{ Rng, CryptoRng };
 use serde::{ Deserialize, Deserializer };
 use serde::de::{ self, Visitor };
 use sha3::Sha3_512;
@@ -6,8 +7,7 @@ use ed25519_dalek::{
     Keypair,
     PublicKey as PublicKey2, Signature as Signature2,
 };
-use crate::define::Signature as Signature3;
-use crate::common::Packing;
+use crate::define::{ Packing, Signature as Signature3 };
 use crate::error;
 
 #[derive(Serialize, Deserialize)]
@@ -18,6 +18,25 @@ pub struct PublicKey(pub(crate) PublicKey2);
 
 #[derive(Serialize)]
 pub struct Signature(pub(crate) Signature2);
+
+
+impl SecretKey {
+    pub fn generate<RNG: Rng + CryptoRng>(rng: &mut RNG) -> SecretKey {
+        use ed25519_dalek::{ SecretKey as SecretKey2 };
+
+        let mut v = [0; 32];
+        rng.fill(&mut v);
+        let secret = SecretKey2::from_bytes(&v).unwrap();
+        let public = PublicKey2::from_secret::<Sha3_512>(&secret);
+        SecretKey(Keypair { secret, public })
+    }
+}
+
+impl PublicKey {
+    pub fn from_secret(SecretKey(sk): &SecretKey) -> PublicKey {
+        PublicKey(sk.public.clone())
+    }
+}
 
 
 impl Packing for Signature {

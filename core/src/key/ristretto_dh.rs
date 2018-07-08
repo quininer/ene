@@ -6,13 +6,12 @@ use serde::de::{ self, Visitor };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::ristretto::{ RistrettoPoint, CompressedRistretto };
 use curve25519_dalek::scalar::Scalar;
-use crate::define::KeyExchange;
-use crate::common::Packing;
+use crate::define::{ Packing, KeyExchange };
 use crate::error;
 
 #[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct SecretKey(pub(crate) Scalar, pub(crate) PublicKey);
+pub struct SecretKey(pub(crate) Scalar, pub(crate) RistrettoPoint);
 
 #[derive(Clone, Debug)]
 #[derive(Serialize)]
@@ -27,11 +26,13 @@ impl SecretKey {
     pub fn generate<RNG: Rng + CryptoRng>(rng: &mut RNG) -> SecretKey {
         let sk = Scalar::random(rng);
         let pk = &sk * &RISTRETTO_BASEPOINT_TABLE;
-        SecretKey(sk, PublicKey(pk))
+        SecretKey(sk, pk)
     }
+}
 
-    pub fn as_public(&self) -> &PublicKey {
-        &self.1
+impl PublicKey {
+    pub fn from_secret(SecretKey(_, pk): &SecretKey) -> PublicKey {
+        PublicKey(pk.clone())
     }
 }
 

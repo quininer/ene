@@ -32,7 +32,7 @@ pub fn send<
     AEAD: AeadCipher
 >(
     rng: &mut RNG,
-    (ref ida, SecretKey(a, PublicKey(aa))): (ID, &SecretKey),
+    (ref ida, SecretKey(a, aa)): (ID, &SecretKey),
     (ref idb, PublicKey(bb)): (ID, &PublicKey),
     plaintext: &[u8]
 ) -> error::Result<(Message, Vec<u8>)> {
@@ -68,7 +68,7 @@ pub fn recv<
     ID: AsRef<str>,
     AEAD: AeadCipher
 >(
-    (ref idb, SecretKey(b, PublicKey(bb))): (ID, &SecretKey),
+    (ref idb, SecretKey(b, bb)): (ID, &SecretKey),
     (ref ida, PublicKey(aa)): (ID, &PublicKey),
     ristretto_dh::Message(xx): &Message,
     ciphertext: &[u8]
@@ -114,22 +114,22 @@ fn test_proto_ooake() {
 
     let a_name = "alice@oake.ene";
     let a_sk = SecretKey::generate(&mut rng);
-    let a_pk = a_sk.as_public();
+    let a_pk = PublicKey::from_secret(&a_sk);
 
     let b_name = "bob@oake.ene";
     let b_sk = SecretKey::generate(&mut rng);
-    let b_pk = b_sk.as_public();
+    let b_pk = PublicKey::from_secret(&b_sk);
 
     let (msg, c) = send::<_, _, Aes128Colm0>(
         &mut rng,
         (a_name, &a_sk),
-        (b_name, b_pk),
+        (b_name, &b_pk),
         m.as_bytes()
     ).unwrap();
 
     let p = recv::<_, Aes128Colm0>(
         (b_name, &b_sk),
-        (a_name, a_pk),
+        (a_name, &a_pk),
         &msg,
         &c
     ).unwrap();

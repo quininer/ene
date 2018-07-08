@@ -14,6 +14,7 @@ extern crate aes;
 extern crate colm;
 extern crate serde;
 extern crate semver;
+extern crate siphasher;
 
 #[macro_use] pub mod common;
 pub mod define;
