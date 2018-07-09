@@ -9,6 +9,7 @@ use curve25519_dalek::scalar::Scalar;
 use crate::define::{ Packing, KeyExchange };
 use crate::error;
 
+
 #[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) Scalar, pub(crate) RistrettoPoint);
@@ -20,7 +21,6 @@ pub struct PublicKey(pub(crate) RistrettoPoint);
 #[derive(Clone, Debug)]
 #[derive(Serialize)]
 pub struct Message(pub(crate) RistrettoPoint);
-
 
 impl SecretKey {
     pub fn generate<RNG: Rng + CryptoRng>(rng: &mut RNG) -> SecretKey {
@@ -128,6 +128,7 @@ impl KeyExchange for RistrettoDH {
     type PublicKey = PublicKey;
     type Message = Message;
 
+    const NAME: &'static str = "RistrettoDH";
     const SHARED_LENGTH: usize = 64;
 
     fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], pk: &Self::PublicKey) -> error::Result<Self::Message> {

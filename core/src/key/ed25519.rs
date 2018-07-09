@@ -10,6 +10,7 @@ use ed25519_dalek::{
 use crate::define::{ Packing, Signature as Signature3 };
 use crate::error;
 
+
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) Keypair);
 
@@ -18,7 +19,6 @@ pub struct PublicKey(pub(crate) PublicKey2);
 
 #[derive(Serialize)]
 pub struct Signature(pub(crate) Signature2);
-
 
 impl SecretKey {
     pub fn generate<RNG: Rng + CryptoRng>(rng: &mut RNG) -> SecretKey {
@@ -37,7 +37,6 @@ impl PublicKey {
         PublicKey(sk.public.clone())
     }
 }
-
 
 impl Packing for Signature {
     const BYTES_LENGTH: usize = 64;
@@ -120,6 +119,8 @@ impl Signature3 for Ed25519 {
     type PrivateKey = SecretKey;
     type PublicKey = PublicKey;
     type Signature = Signature;
+
+    const NAME: &'static str = "Ed25519";
 
     fn sign(SecretKey(sk): &Self::PrivateKey, message: &[u8]) -> Self::Signature {
         Signature(sk.sign::<Sha3_512>(message))

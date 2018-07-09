@@ -1,41 +1,29 @@
-use std::hash::Hasher;
-use siphasher::sip128::{ Hasher128, SipHasher };
-use crate::key::ristretto_dh;
 use crate::proto::{ ooake, sigae };
-use crate::define::{ Packing, KeyExchange, Signature };
+use crate::define::{ KeyExchange, Signature };
+use super::alg;
 
 
 #[derive(Serialize, Deserialize)]
-pub struct Short(pub u128);
+#[non_exhaustive]
+pub enum Protocol {
+    Sonly(alg::Signature),
+    Ooake(alg::KeyExchange, alg::Encrypt),
+    Sigae(bool, alg::Signature, alg::KeyExchange, alg::Encrypt)
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Ooake(
-    ristretto_dh::PublicKey,
-    u128,
     ooake::Message,
     Vec<u8>
 );
 
 #[derive(Serialize, Deserialize)]
-pub struct Sigae<SIG: Signature, KEX: KeyExchange>(
-    SIG::PublicKey,
-    u128,
+pub struct Sigae<KEX: KeyExchange>(
     sigae::Message<KEX>,
     Vec<u8>
 );
 
 #[derive(Serialize, Deserialize)]
 pub struct Sonly<SIG: Signature>(
-    SIG::PublicKey,
-    SIG::Signature,
-    Vec<u8>
+    SIG::Signature
 );
-
-impl<'a, T: Packing> From<&'a T> for Short {
-    fn from(t: &'a T) -> Short {
-        let mut hasher = SipHasher::new();
-        t.read_bytes(|bytes| hasher.write(bytes));
-        let hash = hasher.finish128();
-        Short(u128::from_bytes(hash.as_bytes()))
-    }
-}

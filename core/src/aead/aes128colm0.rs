@@ -13,6 +13,8 @@ impl AeadCipher for Aes128Colm0 {
     const NONCE_LENGTH: usize = NONCE_LENGTH;
     const TAG_LENGTH: usize = BLOCK_LENGTH;
 
+    const NAME: &'static str = "Aes128Colm0";
+
     fn seal(key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> error::Result<()> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
