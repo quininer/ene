@@ -6,6 +6,7 @@ use crate::define::{ KeyExchange, Signature };
 use crate::format::alg;
 
 
+#[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Protocol {

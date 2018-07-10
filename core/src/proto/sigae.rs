@@ -30,8 +30,8 @@ pub fn send<
 >(
     rng: &mut RNG,
     aead: &AeadCipher,
-    (ref ida, sk): (&str, &SIG::PrivateKey),
-    (ref idb, pk): (&str, &KEX::PublicKey),
+    (ida, sk): (&str, &SIG::PrivateKey),
+    (idb, pk): (&str, &KEX::PublicKey),
     aad: &[u8],
     plaintext: &[u8],
     flag: bool
@@ -85,8 +85,8 @@ pub fn recv<
     aead: &AeadCipher,
     (idb, sk, pk): (&str, &KEX::PrivateKey, &KEX::PublicKey),
     (ida, pka): (&str, &SIG::PublicKey),
-    aad: &[u8],
     Message { m, c }: &Message<KEX>,
+    aad: &[u8],
     ciphertext: &[u8],
     flag: bool
 ) -> error::Result<Vec<u8>> {
@@ -182,8 +182,8 @@ fn test_proto_sigae() {
         &Aes128Colm0,
         (b_name, &b_dhsk, &b_dhpk),
         (a_name, &a_pk),
-        aad.as_bytes(),
         &msg,
+        aad.as_bytes(),
         &c,
         false
     ).unwrap();

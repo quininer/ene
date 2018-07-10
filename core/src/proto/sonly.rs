@@ -1,9 +1,8 @@
-use crate::key::ed25519;
 use crate::define::Signature;
 use crate::error;
 
 
-pub type Message = ed25519::Signature;
+pub type Message<SIG> = <SIG as Signature>::Signature;
 
 pub fn send<SIG: Signature>(sk: &SIG::PrivateKey, message: &[u8]) -> SIG::Signature {
     SIG::sign(sk, message)

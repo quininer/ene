@@ -66,8 +66,8 @@ pub fn recv(
     aead: &AeadCipher,
     (idb, SecretKey(b, bb)): (&str, &SecretKey),
     (ida, PublicKey(aa)): (&str, &PublicKey),
-    aad: &[u8],
     ristretto_dh::Message(xx): &Message,
+    aad: &[u8],
     ciphertext: &[u8]
 ) -> error::Result<Vec<u8>> {
     let mut aekey = vec![0; aead.key_length()];
@@ -134,8 +134,8 @@ fn test_proto_ooake() {
         &Aes128Colm0,
         (b_name, &b_sk),
         (a_name, &a_pk),
-        aad.as_bytes(),
         &msg,
+        aad.as_bytes(),
         &c
     ).unwrap();
 

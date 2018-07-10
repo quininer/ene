@@ -45,6 +45,8 @@ pub trait AeadCipher {
     fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
 }
 
-pub trait ToVec {
+pub trait Serde {
     fn to_vec<T: Serialize>(value: &T) -> error::Result<Vec<u8>>;
+
+    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> error::Result<T>;
 }
