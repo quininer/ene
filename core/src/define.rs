@@ -36,13 +36,15 @@ pub trait KeyExchange {
     fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, m: &Self::Message) -> error::Result<()>;
 }
 
-
 pub trait AeadCipher {
-    const NAME: &'static str;
-    const KEY_LENGTH: usize;
-    const NONCE_LENGTH: usize;
-    const TAG_LENGTH: usize;
+    fn key_length(&self) -> usize;
+    fn nonce_length(&self) -> usize;
+    fn tag_length(&self) -> usize;
 
-    fn seal(key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
-    fn open(key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
+    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
+    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
+}
+
+pub trait ToVec {
+    fn to_vec<T: Serialize>(value: &T) -> error::Result<Vec<u8>>;
 }

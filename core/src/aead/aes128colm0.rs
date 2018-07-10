@@ -9,16 +9,14 @@ use crate::error;
 pub struct Aes128Colm0;
 
 impl AeadCipher for Aes128Colm0 {
-    const KEY_LENGTH: usize = KEY_LENGTH;
-    const NONCE_LENGTH: usize = NONCE_LENGTH;
-    const TAG_LENGTH: usize = BLOCK_LENGTH;
+    fn key_length(&self) -> usize { KEY_LENGTH }
+    fn nonce_length(&self) -> usize { NONCE_LENGTH }
+    fn tag_length(&self) -> usize { BLOCK_LENGTH }
 
-    const NAME: &'static str = "Aes128Colm0";
-
-    fn seal(key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> error::Result<()> {
+    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> error::Result<()> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
-            m.len() + Self::TAG_LENGTH != c.len() ||
+            m.len() + BLOCK_LENGTH != c.len() ||
             m.is_empty()
         {
             return Err(error::Error::InvalidLength)
@@ -49,10 +47,10 @@ impl AeadCipher for Aes128Colm0 {
         Ok(())
     }
 
-    fn open(key: &[u8], nonce: &[u8], aad: &[u8], c: &[u8], m: &mut [u8]) -> error::Result<()> {
+    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], c: &[u8], m: &mut [u8]) -> error::Result<()> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
-            c.len() - Self::TAG_LENGTH != m.len() ||
+            c.len() - BLOCK_LENGTH != m.len() ||
             m.is_empty()
         {
             return Err(error::Error::InvalidLength)
@@ -124,8 +122,8 @@ fn test_aead_aes128colm0() {
     thread_rng().fill_bytes(&mut aad);
     thread_rng().fill_bytes(&mut m);
 
-    Aes128Colm0::seal(&key, &nonce, &aad, &m, &mut c).unwrap();
-    Aes128Colm0::open(&key, &nonce, &aad, &c, &mut p).unwrap();
+    Aes128Colm0.seal(&key, &nonce, &aad, &m, &mut c).unwrap();
+    Aes128Colm0.open(&key, &nonce, &aad, &c, &mut p).unwrap();
 
     assert_ne!(c, vec![0; m.len()]);
     assert_eq!(p, m);

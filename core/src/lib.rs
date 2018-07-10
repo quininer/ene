@@ -1,4 +1,4 @@
-#![feature(non_exhaustive, underscore_imports)]
+#![feature(non_exhaustive, underscore_imports, const_fn)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
@@ -24,18 +24,26 @@ pub mod aead;
 pub mod format;
 pub mod error;
 
-use rand::{ Rng, CryptoRng };
+use std::collections::BTreeMap;
+use rand::{ Rng, CryptoRng, OsRng };
 use crate::proto::Protocol;
+use crate::format::Message;
+use crate::define::ToVec;
 
 
 pub struct Ene {
-    id: format::ID,
+    id: String,
     key: key::SecretKey
 }
 
 pub struct GenerateBuilder {
     pub ed25519: bool,
     pub ristretto_dh: bool
+}
+
+pub struct And<'a> {
+    ene: &'a Ene,
+    target: (&'a str, &'a key::PublicKey)
 }
 
 impl Default for GenerateBuilder {

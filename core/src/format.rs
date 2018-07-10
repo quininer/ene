@@ -1,4 +1,25 @@
-pub mod alg;
+pub mod alg {
+    #[derive(Clone, Copy)]
+    #[derive(Serialize, Deserialize)]
+    #[non_exhaustive]
+    pub enum Signature {
+        Ed25519
+    }
+
+    #[derive(Clone, Copy)]
+    #[derive(Serialize, Deserialize)]
+    #[non_exhaustive]
+    pub enum KeyExchange {
+        RistrettoDH
+    }
+
+    #[derive(Clone, Copy)]
+    #[derive(Serialize, Deserialize)]
+    #[non_exhaustive]
+    pub enum Encrypt {
+        Aes128Colm0
+    }
+}
 
 use std::fmt;
 use std::collections::BTreeMap;
@@ -28,10 +49,10 @@ pub type ID = String;
 #[derive(Serialize, Deserialize)]
 pub struct Meta {
     /// Sender ID and PublicKey
-    s: (ID, BTreeMap<String, Vec<u8>>),
+    pub s: (ID, BTreeMap<String, Vec<u8>>),
 
     /// Receiver ID and Short PublicKey
-    r: (Option<ID>, BTreeMap<String, Short>)
+    pub r: Option<(ID, BTreeMap<String, Short>)>
 }
 
 #[derive(Serialize, Deserialize)]

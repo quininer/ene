@@ -14,3 +14,12 @@ macro_rules! check {
         }
     }
 }
+
+macro_rules! try_unwrap {
+    ( $k:expr ; $alg:expr ) => {
+        match $k {
+            Some(k) => k,
+            None => return Err(crate::error::Error::Unsupported($alg))
+        }
+    }
+}

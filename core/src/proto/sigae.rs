@@ -24,26 +24,23 @@ pub struct Message<KEX: KeyExchange> {
 }
 
 pub fn send<
-    ID: AsRef<str>,
     RNG: Rng + CryptoRng,
     SIG: Signature,
     KEX: KeyExchange,
-    AEAD: AeadCipher
 >(
     rng: &mut RNG,
-    (ref ida, sk): (ID, &SIG::PrivateKey),
-    (ref idb, pk): (ID, &KEX::PublicKey),
+    aead: &AeadCipher,
+    (ref ida, sk): (&str, &SIG::PrivateKey),
+    (ref idb, pk): (&str, &KEX::PublicKey),
     aad: &[u8],
     plaintext: &[u8],
     flag: bool
 ) -> error::Result<(Message<KEX>, Vec<u8>)> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
-    let mut aekey = vec![0; AEAD::KEY_LENGTH];
-    let mut nonce = vec![0; AEAD::NONCE_LENGTH];
-    let mut aekey2 = vec![0; AEAD::KEY_LENGTH];
-    let mut nonce2 = vec![0; AEAD::NONCE_LENGTH];
-    let ida = ida.as_ref().as_bytes();
-    let idb = idb.as_ref().as_bytes();
+    let mut aekey = vec![0; aead.key_length()];
+    let mut nonce = vec![0; aead.nonce_length()];
+    let ida = ida.as_bytes();
+    let idb = idb.as_bytes();
 
     let m = KEX::exchange_to(rng, &mut kexkey, pk)?;
     let mut hasher = Shake256::default();
@@ -51,8 +48,6 @@ pub fn send<
     let mut xof = hasher.xof_result();
     xof.read(&mut aekey);
     xof.read(&mut nonce);
-    xof.read(&mut aekey2);
-    xof.read(&mut nonce2);
 
     let mut hasher = Sha3_512::default();
     hasher.input(ida);
@@ -71,55 +66,56 @@ pub fn send<
     id.extend_from_slice(ida);
     id.push(0xff);
     id.extend_from_slice(idb);
-    let mut c = vec![0; ed25519::Signature::BYTES_LENGTH + AEAD::TAG_LENGTH];
-    sig.read_bytes(|sig| AEAD::seal(&aekey, &nonce, &id, &sig, &mut c))?;
+    let mut c = vec![0; ed25519::Signature::BYTES_LENGTH + aead.tag_length()];
+    sig.read_bytes(|sig| aead.seal(&aekey, &nonce, &id, &sig, &mut c))?;
 
-    let mut c2 = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
-    AEAD::seal(&aekey2, &nonce2, aad, plaintext, &mut c2)?;
+    xof.read(&mut aekey);
+    xof.read(&mut nonce);
+
+    let mut c2 = vec![0; plaintext.len() + aead.tag_length()];
+    aead.seal(&aekey, &nonce, aad, plaintext, &mut c2)?;
 
     Ok((Message { m, c }, c2))
 }
 
 pub fn recv<
-    ID: AsRef<str>,
     SIG: Signature,
     KEX: KeyExchange,
-    AEAD: AeadCipher,
 >(
-    (ref idb, sk, pk): (ID, &KEX::PrivateKey, &KEX::PublicKey),
-    (ref ida, pka): (ID, &SIG::PublicKey),
+    aead: &AeadCipher,
+    (idb, sk, pk): (&str, &KEX::PrivateKey, &KEX::PublicKey),
+    (ida, pka): (&str, &SIG::PublicKey),
     aad: &[u8],
     Message { m, c }: &Message<KEX>,
     ciphertext: &[u8],
     flag: bool
 ) -> error::Result<Vec<u8>> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
-    let mut aekey = vec![0; AEAD::KEY_LENGTH];
-    let mut nonce = vec![0; AEAD::NONCE_LENGTH];
-    let mut aekey2 = vec![0; AEAD::KEY_LENGTH];
-    let mut nonce2 = vec![0; AEAD::NONCE_LENGTH];
-    let ida = ida.as_ref().as_bytes();
-    let idb = idb.as_ref().as_bytes();
+    let mut aekey = vec![0; aead.key_length()];
+    let mut nonce = vec![0; aead.nonce_length()];
+    let ida = ida.as_bytes();
+    let idb = idb.as_bytes();
 
     KEX::exchange_from(&mut kexkey, sk, m)?;
     let mut hasher = Shake256::default();
     hasher.process(&kexkey);
     let mut xof = hasher.xof_result();
-    xof.read(&mut aekey);
-    xof.read(&mut nonce);
-    xof.read(&mut aekey2);
-    xof.read(&mut nonce2);
 
     let mut id = Vec::with_capacity(ida.len() + idb.len() + 1);
     id.extend_from_slice(ida);
     id.push(0xff);
     id.extend_from_slice(idb);
-    let mut sig = vec![0; c.len() - AEAD::TAG_LENGTH];
-    AEAD::open(&aekey, &nonce, &id, c, &mut sig)?;
+
+    xof.read(&mut aekey);
+    xof.read(&mut nonce);
+    let mut sig = vec![0; c.len() - aead.tag_length()];
+    aead.open(&aekey, &nonce, &id, c, &mut sig)?;
     let sig = SIG::Signature::from_bytes(&sig)?;
 
-    let mut plaintext = vec![0; ciphertext.len() - AEAD::TAG_LENGTH];
-    AEAD::open(&aekey2, &nonce2, aad, &ciphertext, &mut plaintext)?;
+    xof.read(&mut aekey);
+    xof.read(&mut nonce);
+    let mut plaintext = vec![0; ciphertext.len() - aead.tag_length()];
+    aead.open(&aekey, &nonce, aad, &ciphertext, &mut plaintext)?;
 
     let mut hasher = Sha3_512::default();
     hasher.input(ida);
@@ -166,12 +162,12 @@ fn test_proto_sigae() {
     let b_dhpk = ristretto_dh::PublicKey::from_secret(&b_dhsk);
 
     let (msg, c) = send::<
-        _, _,
+        _,
         ed25519::Ed25519,
         ristretto_dh::RistrettoDH,
-        Aes128Colm0
     >(
         &mut rng,
+        &Aes128Colm0,
         (a_name, &a_sk),
         (b_name, &b_dhpk),
         aad.as_bytes(),
@@ -180,11 +176,10 @@ fn test_proto_sigae() {
     ).unwrap();
 
     let p = recv::<
-        _,
         ed25519::Ed25519,
         ristretto_dh::RistrettoDH,
-        Aes128Colm0
     >(
+        &Aes128Colm0,
         (b_name, &b_dhsk, &b_dhpk),
         (a_name, &a_pk),
         aad.as_bytes(),
