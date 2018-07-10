@@ -73,8 +73,6 @@ de!(PublicKey);
 de!(Message);
 
 
-pub struct RistrettoDH;
-
 impl Packing for PublicKey {
     const BYTES_LENGTH: usize = 32;
 
@@ -122,6 +120,9 @@ impl Packing for Message {
         }
     }
 }
+
+
+pub struct RistrettoDH;
 
 impl KeyExchange for RistrettoDH {
     type PrivateKey = SecretKey;

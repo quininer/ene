@@ -33,6 +33,7 @@ pub fn send<
     rng: &mut RNG,
     (ref ida, sk): (ID, &SIG::PrivateKey),
     (ref idb, pk): (ID, &KEX::PublicKey),
+    aad: &[u8],
     plaintext: &[u8],
     flag: bool
 ) -> error::Result<(Message<KEX>, Vec<u8>)> {
@@ -60,19 +61,21 @@ pub fn send<
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
     if !flag {
+        hasher.input(aad);
+        hasher.input(&[0xff]);
         hasher.input(plaintext);
     }
     let sig = SIG::sign(sk, hasher.result().as_slice());
 
-    let mut aad = Vec::with_capacity(ida.len() + idb.len() + 1);
-    aad.extend_from_slice(ida);
-    aad.push(0xff);
-    aad.extend_from_slice(idb);
+    let mut id = Vec::with_capacity(ida.len() + idb.len() + 1);
+    id.extend_from_slice(ida);
+    id.push(0xff);
+    id.extend_from_slice(idb);
     let mut c = vec![0; ed25519::Signature::BYTES_LENGTH + AEAD::TAG_LENGTH];
-    sig.read_bytes(|sig| AEAD::seal(&aekey, &nonce, &aad, &sig, &mut c))?;
+    sig.read_bytes(|sig| AEAD::seal(&aekey, &nonce, &id, &sig, &mut c))?;
 
     let mut c2 = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
-    AEAD::seal(&aekey2, &nonce2, &[], plaintext, &mut c2)?;
+    AEAD::seal(&aekey2, &nonce2, aad, plaintext, &mut c2)?;
 
     Ok((Message { m, c }, c2))
 }
@@ -85,6 +88,7 @@ pub fn recv<
 >(
     (ref idb, sk, pk): (ID, &KEX::PrivateKey, &KEX::PublicKey),
     (ref ida, pka): (ID, &SIG::PublicKey),
+    aad: &[u8],
     Message { m, c }: &Message<KEX>,
     ciphertext: &[u8],
     flag: bool
@@ -106,16 +110,16 @@ pub fn recv<
     xof.read(&mut aekey2);
     xof.read(&mut nonce2);
 
-    let mut aad = Vec::with_capacity(ida.len() + idb.len() + 1);
-    aad.extend_from_slice(ida);
-    aad.push(0xff);
-    aad.extend_from_slice(idb);
+    let mut id = Vec::with_capacity(ida.len() + idb.len() + 1);
+    id.extend_from_slice(ida);
+    id.push(0xff);
+    id.extend_from_slice(idb);
     let mut sig = vec![0; c.len() - AEAD::TAG_LENGTH];
-    AEAD::open(&aekey, &nonce, &aad, c, &mut sig)?;
+    AEAD::open(&aekey, &nonce, &id, c, &mut sig)?;
     let sig = SIG::Signature::from_bytes(&sig)?;
 
     let mut plaintext = vec![0; ciphertext.len() - AEAD::TAG_LENGTH];
-    AEAD::open(&aekey2, &nonce2, &[], &ciphertext, &mut plaintext)?;
+    AEAD::open(&aekey2, &nonce2, aad, &ciphertext, &mut plaintext)?;
 
     let mut hasher = Sha3_512::default();
     hasher.input(ida);
@@ -124,6 +128,8 @@ pub fn recv<
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
     if !flag {
+        hasher.input(aad);
+        hasher.input(&[0xff]);
         hasher.input(&plaintext);
     }
     if SIG::verify(pka, &sig, hasher.result().as_slice()) {
@@ -142,6 +148,10 @@ fn test_proto_sigae() {
 
     let mut rng = thread_rng();
 
+    let aad = rng.sample_iter(&Alphanumeric)
+        .take(42)
+        .fuse()
+        .collect::<String>();
     let m = rng.sample_iter(&Alphanumeric)
         .take(1024)
         .fuse()
@@ -164,6 +174,7 @@ fn test_proto_sigae() {
         &mut rng,
         (a_name, &a_sk),
         (b_name, &b_dhpk),
+        aad.as_bytes(),
         m.as_bytes(),
         false
     ).unwrap();
@@ -176,6 +187,7 @@ fn test_proto_sigae() {
     >(
         (b_name, &b_dhsk, &b_dhpk),
         (a_name, &a_pk),
+        aad.as_bytes(),
         &msg,
         &c,
         false

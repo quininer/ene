@@ -1,5 +1,4 @@
-mod alg;
-mod proto;
+pub mod alg;
 
 use std::fmt;
 use std::collections::BTreeMap;
@@ -7,7 +6,7 @@ use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
 use crate::key;
 use crate::define::Packing;
-use self::proto::Protocol;
+use crate::proto::Protocol;
 
 
 pub type PrivateKey = Envelope<(ID, key::SecretKey)>;

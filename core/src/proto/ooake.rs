@@ -34,6 +34,7 @@ pub fn send<
     rng: &mut RNG,
     (ref ida, SecretKey(a, aa)): (ID, &SecretKey),
     (ref idb, PublicKey(bb)): (ID, &PublicKey),
+    aad: &[u8],
     plaintext: &[u8]
 ) -> error::Result<(Message, Vec<u8>)> {
     let mut aekey = vec![0; AEAD::KEY_LENGTH];
@@ -59,7 +60,7 @@ pub fn send<
     xof.read(&mut nonce);
 
     let mut ciphertext = vec![0; plaintext.len() + AEAD::TAG_LENGTH];
-    AEAD::seal(&aekey, &nonce, &[], plaintext, &mut ciphertext)?;
+    AEAD::seal(&aekey, &nonce, aad, plaintext, &mut ciphertext)?;
 
     Ok((ristretto_dh::Message(xx), ciphertext))
 }
@@ -70,6 +71,7 @@ pub fn recv<
 >(
     (ref idb, SecretKey(b, bb)): (ID, &SecretKey),
     (ref ida, PublicKey(aa)): (ID, &PublicKey),
+    aad: &[u8],
     ristretto_dh::Message(xx): &Message,
     ciphertext: &[u8]
 ) -> error::Result<Vec<u8>> {
@@ -93,7 +95,7 @@ pub fn recv<
     xof.read(&mut nonce);
 
     let mut plaintext = vec![0; ciphertext.len() - AEAD::TAG_LENGTH];
-    AEAD::open(&aekey, &nonce, &[], ciphertext, &mut plaintext)?;
+    AEAD::open(&aekey, &nonce, aad, ciphertext, &mut plaintext)?;
 
     Ok(plaintext)
 }
@@ -111,6 +113,10 @@ fn test_proto_ooake() {
         .take(1024)
         .fuse()
         .collect::<String>();
+    let aad = rng.sample_iter(&Alphanumeric)
+        .take(42)
+        .fuse()
+        .collect::<String>();
 
     let a_name = "alice@oake.ene";
     let a_sk = SecretKey::generate(&mut rng);
@@ -124,12 +130,14 @@ fn test_proto_ooake() {
         &mut rng,
         (a_name, &a_sk),
         (b_name, &b_pk),
+        aad.as_bytes(),
         m.as_bytes()
     ).unwrap();
 
     let p = recv::<_, Aes128Colm0>(
         (b_name, &b_sk),
         (a_name, &a_pk),
+        aad.as_bytes(),
         &msg,
         &c
     ).unwrap();

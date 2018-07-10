@@ -25,6 +25,7 @@ pub mod format;
 pub mod error;
 
 use rand::{ Rng, CryptoRng };
+use crate::proto::Protocol;
 
 
 pub struct Ene {
