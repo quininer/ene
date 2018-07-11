@@ -2,8 +2,30 @@ pub mod ooake;
 pub mod sigae;
 pub mod sonly;
 
+pub mod alg {
+    #[derive(Clone, Copy, Debug)]
+    #[derive(Serialize, Deserialize)]
+    #[non_exhaustive]
+    pub enum Signature {
+        Ed25519
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    #[derive(Serialize, Deserialize)]
+    #[non_exhaustive]
+    pub enum KeyExchange {
+        RistrettoDH
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    #[derive(Serialize, Deserialize)]
+    #[non_exhaustive]
+    pub enum Encrypt {
+        Aes128Colm0
+    }
+}
+
 use crate::define::{ KeyExchange, Signature };
-use crate::format::alg;
 
 
 #[derive(Clone, Debug)]

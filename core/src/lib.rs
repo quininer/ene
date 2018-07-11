@@ -26,8 +26,8 @@ pub mod error;
 
 use std::collections::BTreeMap;
 use rand::{ Rng, CryptoRng, OsRng };
-use crate::format::{ alg, Message };
-use crate::proto::{ Protocol, ooake, sigae, sonly };
+use crate::format::Message;
+use crate::proto::{ alg, Protocol, ooake, sigae, sonly };
 use crate::key::ed25519::{ self, Ed25519 };
 use crate::key::ristretto_dh::{ self, RistrettoDH };
 use crate::aead::aes128colm0::Aes128Colm0;
@@ -70,11 +70,29 @@ impl GenerateBuilder {
             else { None };
 
         Ene {
-            id: id.to_owned(),
+            id: id.to_string(),
             key: key::SecretKey{
                 ed25519: ed25519_sk,
                 ristretto_dh: ristretto_dh_sk
             }
+        }
+    }
+}
+
+impl Ene {
+    pub fn and<'a>(&'a self, id: &'a str, target: &'a key::PublicKey) -> And<'a> {
+        And {
+            ene: self,
+            target: (id, target)
+        }
+    }
+
+    pub fn to_public(&self) -> key::PublicKey {
+        use crate::key::{ ed25519, ristretto_dh };
+
+        key::PublicKey {
+            ed25519: self.key.ed25519.as_ref().map(ed25519::PublicKey::from_secret),
+            ristretto_dh: self.key.ristretto_dh.as_ref().map(ristretto_dh::PublicKey::from_secret)
         }
     }
 }
@@ -200,7 +218,7 @@ impl<'a> And<'a> {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let msg: ooake::Message = DE::from_slice(message)?;
+                let (msg, c): (ooake::Message, Vec<u8>) = DE::from_slice(message)?;
 
                 let dhsk_b = try_unwrap!(&skb.ristretto_dh; RistrettoDH::NAME);
                 let dhpk_a = try_unwrap!(&pka.ristretto_dh; RistrettoDH::NAME);
@@ -210,7 +228,7 @@ impl<'a> And<'a> {
                     (ida, dhpk_a),
                     &msg,
                     aad,
-                    message
+                    &c
                 )
             },
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
@@ -218,7 +236,7 @@ impl<'a> And<'a> {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let msg: sigae::Message<RistrettoDH> = DE::from_slice(message)?;
+                let (msg, c): (sigae::Message<RistrettoDH>, Vec<u8>) = DE::from_slice(message)?;
 
                 let dhsk_b = try_unwrap!(&skb.ristretto_dh; RistrettoDH::NAME);
                 let dhpk_b = ristretto_dh::PublicKey::from_secret(dhsk_b);
@@ -229,7 +247,7 @@ impl<'a> And<'a> {
                     (ida, sigpk_a),
                     &msg,
                     aad,
-                    message,
+                    &c,
                     flag
                 )
             }

@@ -106,11 +106,9 @@ fn test_proto_ooake() {
 
     let m = rng.sample_iter(&Alphanumeric)
         .take(1024)
-        .fuse()
         .collect::<String>();
     let aad = rng.sample_iter(&Alphanumeric)
         .take(42)
-        .fuse()
         .collect::<String>();
 
     let a_name = "alice@oake.ene";

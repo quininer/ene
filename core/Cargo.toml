@@ -23,7 +23,9 @@ aes = "*"
 
 serde = "*"
 serde_derive = "*"
-serde_cbor = "*"
 
 semver = "*"
 siphasher = "*"
+
+[dev-dependencies]
+serde_cbor = "*"

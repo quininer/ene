@@ -1,26 +1,3 @@
-pub mod alg {
-    #[derive(Clone, Copy, Debug)]
-    #[derive(Serialize, Deserialize)]
-    #[non_exhaustive]
-    pub enum Signature {
-        Ed25519
-    }
-
-    #[derive(Clone, Copy, Debug)]
-    #[derive(Serialize, Deserialize)]
-    #[non_exhaustive]
-    pub enum KeyExchange {
-        RistrettoDH
-    }
-
-    #[derive(Clone, Copy, Debug)]
-    #[derive(Serialize, Deserialize)]
-    #[non_exhaustive]
-    pub enum Encrypt {
-        Aes128Colm0
-    }
-}
-
 use std::fmt;
 use std::collections::BTreeMap;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
@@ -38,6 +15,7 @@ pub type Message = Envelope<(Meta, Protocol, Vec<u8>)>;
 
 pub struct ENE;
 
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct Version(pub u16);
 
@@ -55,6 +33,7 @@ pub struct Meta {
     pub r: Option<(ID, BTreeMap<String, Short>)>
 }
 
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
 #[derive(Serialize, Deserialize)]
 pub struct Short(pub u128);
 
@@ -108,5 +87,11 @@ impl<'a, T: Packing> From<&'a T> for Short {
         t.read_bytes(|bytes| hasher.write(bytes));
         let hash = hasher.finish128();
         Short(u128::from_bytes(hash.as_bytes()))
+    }
+}
+
+impl fmt::Debug for Short {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:#032x}", self.0)
     }
 }
