@@ -49,7 +49,7 @@ fn test_ene() {
     let enemsg = alice_sk.and(bob, &bob_pk)
         .sendto::<Cbor>(&proto, title.as_bytes(), msg.as_bytes()).unwrap();
 
-    let Envelope(_, v, (meta, proto, enemsg)) = enemsg;
+    let Envelope(_, v, (_, proto, enemsg)) = enemsg;
     assert_eq!(v, Version::default());
     let msg2 = bob_sk.and(alice, &alice_pk)
         .recvfrom::<Cbor>(&proto, title.as_bytes(), &enemsg).unwrap();

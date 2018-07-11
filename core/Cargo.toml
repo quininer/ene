@@ -23,6 +23,7 @@ aes = "*"
 
 serde = "*"
 serde_derive = "*"
+serde_bytes = "*"
 
 semver = "*"
 siphasher = "*"

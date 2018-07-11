@@ -15,7 +15,7 @@ pub trait Packing: Sized {
 pub trait Signature {
     type PrivateKey;
     type PublicKey;
-    type Signature: Packing + Serialize + for<'a> Deserialize<'a>;
+    type Signature: Packing;
 
     const NAME: &'static str;
 

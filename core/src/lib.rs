@@ -1,4 +1,4 @@
-#![feature(non_exhaustive, underscore_imports, const_fn)]
+#![feature(non_exhaustive, underscore_imports)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
@@ -13,6 +13,7 @@ extern crate generic_array;
 extern crate aes;
 extern crate colm;
 extern crate serde;
+extern crate serde_bytes;
 extern crate semver;
 extern crate siphasher;
 
@@ -26,6 +27,7 @@ pub mod error;
 
 use std::collections::BTreeMap;
 use rand::{ Rng, CryptoRng, OsRng };
+use serde_bytes::{ ByteBuf, Bytes };
 use crate::format::Message;
 use crate::proto::{ alg, Protocol, ooake, sigae, sonly };
 use crate::key::ed25519::{ self, Ed25519 };
@@ -117,10 +119,10 @@ impl<'a> And<'a> {
                 let sig_name = Ed25519::NAME;
                 let sig_sk = try_unwrap!(&ska.ed25519; sig_name);
                 let sig_pk = ed25519::PublicKey::from_secret(sig_sk);
-                smap.insert(sig_name.into(), SER::to_vec(&sig_pk)?);
+                smap.insert(sig_name.into(), ByteBuf::from(SER::to_vec(&sig_pk)?));
 
                 let msg = sonly::send::<Ed25519>(sig_sk, &aad);
-                let msg = SER::to_vec(&msg)?;
+                let msg = ByteBuf::from(SER::to_vec(&msg)?);
 
                 let meta = Meta {
                     s: (ida.to_string(), smap),
@@ -141,10 +143,10 @@ impl<'a> And<'a> {
                 let ska = try_unwrap!(&ska.ristretto_dh; dh_name);
                 let pka = ristretto_dh::PublicKey::from_secret(ska);
                 let pkb = try_unwrap!(&pkb.ristretto_dh; dh_name);
-                smap.insert(dh_name.into(), SER::to_vec(&pka)?);
+                smap.insert(dh_name.into(), ByteBuf::from(SER::to_vec(&pka)?));
                 rmap.insert(dh_name.into(), Short::from(pkb));
 
-                let msg = ooake::send(
+                let (msg, c) = ooake::send(
                     &mut rng,
                     aead,
                     (ida, ska),
@@ -152,7 +154,8 @@ impl<'a> And<'a> {
                     aad,
                     message
                 )?;
-                let msg = SER::to_vec(&msg)?;
+                let msg = (msg, ByteBuf::from(c));
+                let msg = ByteBuf::from(SER::to_vec(&msg)?);
 
                 let meta = Meta {
                     s: (ida.to_string(), smap),
@@ -174,10 +177,10 @@ impl<'a> And<'a> {
                 let sigsk_a = try_unwrap!(&ska.ed25519; sig_name);
                 let sigpk_a = ed25519::PublicKey::from_secret(sigsk_a);
                 let dhpk_b = try_unwrap!(&pkb.ristretto_dh; dh_name);
-                smap.insert(sig_name.into(), SER::to_vec(&sigpk_a)?);
+                smap.insert(sig_name.into(), ByteBuf::from(SER::to_vec(&sigpk_a)?));
                 rmap.insert(dh_name.into(), Short::from(dhpk_b));
 
-                let msg = sigae::send::<_, Ed25519, RistrettoDH>(
+                let (msg, c) = sigae::send::<_, Ed25519, RistrettoDH>(
                     &mut rng,
                     aead,
                     (ida, sigsk_a),
@@ -186,7 +189,8 @@ impl<'a> And<'a> {
                     message,
                     flag
                 )?;
-                let msg = SER::to_vec(&msg)?;
+                let msg = (msg, ByteBuf::from(c));
+                let msg = ByteBuf::from(SER::to_vec(&msg)?);
 
                 let meta = Meta {
                     s: (ida.to_string(), smap),
@@ -218,7 +222,7 @@ impl<'a> And<'a> {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let (msg, c): (ooake::Message, Vec<u8>) = DE::from_slice(message)?;
+                let (msg, c): (ooake::Message, Bytes) = DE::from_slice(message)?;
 
                 let dhsk_b = try_unwrap!(&skb.ristretto_dh; RistrettoDH::NAME);
                 let dhpk_a = try_unwrap!(&pka.ristretto_dh; RistrettoDH::NAME);
@@ -236,7 +240,7 @@ impl<'a> And<'a> {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let (msg, c): (sigae::Message<RistrettoDH>, Vec<u8>) = DE::from_slice(message)?;
+                let (msg, c): (sigae::Message<RistrettoDH>, Bytes) = DE::from_slice(message)?;
 
                 let dhsk_b = try_unwrap!(&skb.ristretto_dh; RistrettoDH::NAME);
                 let dhpk_b = ristretto_dh::PublicKey::from_secret(dhsk_b);
