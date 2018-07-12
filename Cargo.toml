@@ -4,10 +4,23 @@ cargo-features = ["edition"]
 name = "ene"
 version = "0.1.0"
 authors = ["quininer <quininer@live.com>"]
+description = "A experimental email encryption tool"
 edition = "2018"
 
 [workspace]
 members = [ "core" ]
 
 [dependencies]
+ene-core = { path = "./core" }
+
+failure = "*"
+structopt = { version = "0.1" }
+structopt-derive = { version = "0.1" }
+# clap-verbosity-flag = "*"
+# human-panic = "*"
+directories = "*"
+toml = "*"
 termcolor = "*"
+ttyaskpass = { path = "../ttyaskpass" }
+
+sled = "*"

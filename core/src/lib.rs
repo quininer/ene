@@ -25,7 +25,6 @@ pub mod aead;
 pub mod format;
 pub mod error;
 
-use std::collections::BTreeMap;
 use rand::{ Rng, CryptoRng, OsRng };
 use serde_bytes::{ ByteBuf, Bytes };
 use crate::format::Message;
@@ -41,7 +40,7 @@ pub struct Ene {
     key: key::SecretKey
 }
 
-pub struct GenerateBuilder {
+pub struct Builder {
     pub ed25519: bool,
     pub ristretto_dh: bool
 }
@@ -51,19 +50,17 @@ pub struct And<'a> {
     target: (&'a str, &'a key::PublicKey)
 }
 
-impl Default for GenerateBuilder {
+impl Default for Builder {
     fn default() -> Self {
-        GenerateBuilder {
+        Builder {
             ed25519: true,
             ristretto_dh: true
         }
     }
 }
 
-impl GenerateBuilder {
+impl Builder {
     pub fn generate<RNG: Rng + CryptoRng>(&self, id: &str, rng: &mut RNG) -> Ene {
-        use crate::key::{ ed25519, ristretto_dh };
-
         let ed25519_sk =
             if self.ed25519 { Some(ed25519::SecretKey::generate(rng)) }
             else { None };
@@ -73,7 +70,7 @@ impl GenerateBuilder {
 
         Ene {
             id: id.to_string(),
-            key: key::SecretKey{
+            key: key::SecretKey {
                 ed25519: ed25519_sk,
                 ristretto_dh: ristretto_dh_sk
             }
@@ -89,9 +86,23 @@ impl Ene {
         }
     }
 
-    pub fn to_public(&self) -> key::PublicKey {
-        use crate::key::{ ed25519, ristretto_dh };
+    pub fn from(id: &str, key: key::SecretKey) -> Self {
+        Ene { id: id.to_string(), key }
+    }
 
+    pub fn get_id(&self) -> &str {
+        self.id.as_ref()
+    }
+
+    pub fn as_secret(&self) -> &key::SecretKey {
+        &self.key
+    }
+
+    pub fn into_secret(self) -> key::SecretKey {
+        self.key
+    }
+
+    pub fn to_public(&self) -> key::PublicKey {
         key::PublicKey {
             ed25519: self.key.ed25519.as_ref().map(ed25519::PublicKey::from_secret),
             ristretto_dh: self.key.ristretto_dh.as_ref().map(ristretto_dh::PublicKey::from_secret)
@@ -114,15 +125,16 @@ impl<'a> And<'a> {
 
         match *proto {
             Protocol::Sonly(alg::Signature::Ed25519) => {
-                let mut smap = BTreeMap::new();
-
-                let sig_name = Ed25519::NAME;
-                let sig_sk = try_unwrap!(&ska.ed25519; sig_name);
+                let sig_sk = try_unwrap!(&ska.ed25519; Ed25519::NAME);
                 let sig_pk = ed25519::PublicKey::from_secret(sig_sk);
-                smap.insert(sig_name.into(), ByteBuf::from(SER::to_vec(&sig_pk)?));
 
                 let msg = sonly::send::<Ed25519>(sig_sk, &aad);
                 let msg = ByteBuf::from(SER::to_vec(&msg)?);
+
+                let smap = key::PublicKey {
+                    ed25519: Some(sig_pk),
+                    ..Default::default()
+                };
 
                 let meta = Meta {
                     s: (ida.to_string(), smap),
@@ -132,19 +144,22 @@ impl<'a> And<'a> {
                 Ok(Envelope(ENE, v, (meta, proto.clone(), msg)))
             },
             Protocol::Ooake(alg::KeyExchange::RistrettoDH, enc) => {
-                let mut smap = BTreeMap::new();
-                let mut rmap = BTreeMap::new();
-
                 let aead = match enc {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let dh_name = RistrettoDH::NAME;
-                let ska = try_unwrap!(&ska.ristretto_dh; dh_name);
+                let ska = try_unwrap!(&ska.ristretto_dh; RistrettoDH::NAME);
                 let pka = ristretto_dh::PublicKey::from_secret(ska);
-                let pkb = try_unwrap!(&pkb.ristretto_dh; dh_name);
-                smap.insert(dh_name.into(), ByteBuf::from(SER::to_vec(&pka)?));
-                rmap.insert(dh_name.into(), Short::from(pkb));
+                let pkb = try_unwrap!(&pkb.ristretto_dh; RistrettoDH::NAME);
+
+                let smap = key::PublicKey {
+                    ristretto_dh: Some(pka),
+                    ..Default::default()
+                };
+                let rmap = key::ShortPublicKey {
+                    ristretto_dh: Some(Short::from(pkb)),
+                    ..Default::default()
+                };
 
                 let (msg, c) = ooake::send(
                     &mut rng,
@@ -165,20 +180,22 @@ impl<'a> And<'a> {
                 Ok(Envelope(ENE, v, (meta, proto.clone(), msg)))
             },
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
-                let mut smap = BTreeMap::new();
-                let mut rmap = BTreeMap::new();
-
                 let aead = match enc {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let sig_name = Ed25519::NAME;
-                let dh_name = RistrettoDH::NAME;
-                let sigsk_a = try_unwrap!(&ska.ed25519; sig_name);
+                let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
                 let sigpk_a = ed25519::PublicKey::from_secret(sigsk_a);
-                let dhpk_b = try_unwrap!(&pkb.ristretto_dh; dh_name);
-                smap.insert(sig_name.into(), ByteBuf::from(SER::to_vec(&sigpk_a)?));
-                rmap.insert(dh_name.into(), Short::from(dhpk_b));
+                let dhpk_b = try_unwrap!(&pkb.ristretto_dh; RistrettoDH::NAME);
+
+                let smap = key::PublicKey {
+                    ed25519: Some(sigpk_a),
+                    ..Default::default()
+                };
+                let rmap = key::ShortPublicKey {
+                    ristretto_dh: Some(Short::from(dhpk_b)),
+                    ..Default::default()
+                };
 
                 let (msg, c) = sigae::send::<_, Ed25519, RistrettoDH>(
                     &mut rng,

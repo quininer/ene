@@ -1,14 +1,13 @@
 use std::fmt;
-use std::collections::BTreeMap;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
 use serde_bytes::{ ByteBuf, Bytes };
 use crate::key;
 use crate::define::Packing;
-use crate::proto::Protocol;
+use crate::proto::{ alg, Protocol };
 
 
-pub type PrivateKey = Envelope<(ID, key::SecretKey)>;
+pub type PrivateKey = Envelope<(ID, alg::Encrypt, ByteBuf, ByteBuf)>;
 
 pub type PublicKey = Envelope<(ID, key::PublicKey)>;
 
@@ -30,10 +29,10 @@ pub type ID = String;
 #[derive(Serialize, Deserialize)]
 pub struct Meta {
     /// Sender ID and PublicKey
-    pub s: (ID, BTreeMap<String, ByteBuf>),
+    pub s: (ID, key::PublicKey),
 
     /// Receiver ID and Short PublicKey
-    pub r: Option<(ID, BTreeMap<String, Short>)>
+    pub r: Option<(ID, key::ShortPublicKey)>
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]

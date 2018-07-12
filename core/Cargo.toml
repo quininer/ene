@@ -7,26 +7,26 @@ authors = ["quininer <quininer@live.com>"]
 edition = "2018"
 
 [dependencies]
-failure = "*"
-arrayref = "*"
+failure = "0.1"
+arrayref = "0.3"
 
-rand = "*"
-sha3 = "*"
-digest = "*"
-subtle = "*"
-curve25519-dalek = { version = "*", features = [ "serde" ] }
-ed25519-dalek = { version = "*", features = [ "serde" ] }
+rand = "0.5"
+sha3 = "0.7"
+digest = "0.7"
+subtle = "0.7"
+curve25519-dalek = { version = "0.18", features = [ "serde" ] }
+ed25519-dalek = { version = "0.6", features = [ "serde" ] }
 
 generic-array = "0.9"
-colm = "*"
-aes = "*"
+colm = "0.1"
+aes = "0.1"
 
-serde = "*"
-serde_derive = "*"
-serde_bytes = "*"
+serde = "1.0"
+serde_derive = "1.0"
+serde_bytes = "0.10"
 
-semver = "*"
-siphasher = "*"
+semver = "0.9"
+siphasher = "0.2"
 
 [dev-dependencies]
-serde_cbor = "*"
+serde_cbor = "0.8"

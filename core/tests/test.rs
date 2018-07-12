@@ -6,7 +6,7 @@ extern crate ene_core;
 use rand::{ Rng, OsRng };
 use rand::distributions::Alphanumeric;
 use serde::{ Serialize, Deserialize };
-use ene_core::{ error, Ene, GenerateBuilder };
+use ene_core::{ error, Builder };
 use ene_core::proto::{ alg, Protocol };
 use ene_core::format::{ Envelope, Version };
 use ene_core::define::Serde;
@@ -32,11 +32,11 @@ fn test_ene() {
     let mut rng = OsRng::new().unwrap();
 
     let alice = "alice@core.ene";
-    let alice_sk = GenerateBuilder::default().generate(alice, &mut rng);
+    let alice_sk = Builder::default().generate(alice, &mut rng);
     let alice_pk = alice_sk.to_public();
 
     let bob = "bob@core.ene";
-    let bob_sk = GenerateBuilder::default().generate(bob, &mut rng);
+    let bob_sk = Builder::default().generate(bob, &mut rng);
     let bob_pk = bob_sk.to_public();
 
 
