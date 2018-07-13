@@ -140,7 +140,7 @@ fn test_proto_sigae() {
     use rand::{ Rng, thread_rng };
     use rand::distributions::Alphanumeric;
     use crate::aead::aes128colm0::Aes128Colm0;
-    use crate::key::ristretto_dh;
+    use crate::key::ristrettodh;
 
     let mut rng = thread_rng();
 
@@ -158,13 +158,13 @@ fn test_proto_sigae() {
     let a_pk = ed25519::PublicKey::from_secret(&a_sk);
 
     let b_name = "bob@oake.ene";
-    let b_dhsk = ristretto_dh::SecretKey::generate(&mut rng);
-    let b_dhpk = ristretto_dh::PublicKey::from_secret(&b_dhsk);
+    let b_dhsk = ristrettodh::SecretKey::generate(&mut rng);
+    let b_dhpk = ristrettodh::PublicKey::from_secret(&b_dhsk);
 
     let (msg, c) = send::<
         _,
         ed25519::Ed25519,
-        ristretto_dh::RistrettoDH,
+        ristrettodh::RistrettoDH,
     >(
         &mut rng,
         &Aes128Colm0,
@@ -177,7 +177,7 @@ fn test_proto_sigae() {
 
     let p = recv::<
         ed25519::Ed25519,
-        ristretto_dh::RistrettoDH,
+        ristrettodh::RistrettoDH,
     >(
         &Aes128Colm0,
         (b_name, &b_dhsk, &b_dhpk),

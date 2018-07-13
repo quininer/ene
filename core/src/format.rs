@@ -2,9 +2,9 @@ use std::fmt;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
 use serde_bytes::{ ByteBuf, Bytes };
-use crate::key;
+use crate::{ key, alg };
 use crate::define::Packing;
-use crate::proto::{ alg, Protocol };
+use crate::proto::{ Protocol };
 
 
 pub type PrivateKey = Envelope<(ID, alg::Encrypt, ByteBuf, ByteBuf)>;

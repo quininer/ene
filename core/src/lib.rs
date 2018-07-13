@@ -1,4 +1,4 @@
-#![feature(non_exhaustive, underscore_imports)]
+#![feature(non_exhaustive, underscore_imports, try_from)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
@@ -20,6 +20,7 @@ extern crate siphasher;
 #[macro_use] pub mod common;
 pub mod define;
 pub mod proto;
+pub mod alg;
 pub mod key;
 pub mod aead;
 pub mod format;
@@ -28,9 +29,9 @@ pub mod error;
 use rand::{ Rng, CryptoRng, OsRng };
 use serde_bytes::{ ByteBuf, Bytes };
 use crate::format::Message;
-use crate::proto::{ alg, Protocol, ooake, sigae, sonly };
+use crate::proto::{ Protocol, ooake, sigae, sonly };
 use crate::key::ed25519::{ self, Ed25519 };
-use crate::key::ristretto_dh::{ self, RistrettoDH };
+use crate::key::ristrettodh::{ self, RistrettoDH };
 use crate::aead::aes128colm0::Aes128Colm0;
 use crate::define::{ Signature, KeyExchange, AeadCipher, Serde };
 
@@ -42,7 +43,7 @@ pub struct Ene {
 
 pub struct Builder {
     pub ed25519: bool,
-    pub ristretto_dh: bool
+    pub ristrettodh: bool
 }
 
 pub struct And<'a> {
@@ -54,7 +55,7 @@ impl Default for Builder {
     fn default() -> Self {
         Builder {
             ed25519: true,
-            ristretto_dh: true
+            ristrettodh: true
         }
     }
 }
@@ -64,15 +65,15 @@ impl Builder {
         let ed25519_sk =
             if self.ed25519 { Some(ed25519::SecretKey::generate(rng)) }
             else { None };
-        let ristretto_dh_sk =
-            if self.ristretto_dh { Some(ristretto_dh::SecretKey::generate(rng)) }
+        let ristrettodh_sk =
+            if self.ristrettodh { Some(ristrettodh::SecretKey::generate(rng)) }
             else { None };
 
         Ene {
             id: id.to_string(),
             key: key::SecretKey {
                 ed25519: ed25519_sk,
-                ristretto_dh: ristretto_dh_sk
+                ristrettodh: ristrettodh_sk
             }
         }
     }
@@ -105,7 +106,7 @@ impl Ene {
     pub fn to_public(&self) -> key::PublicKey {
         key::PublicKey {
             ed25519: self.key.ed25519.as_ref().map(ed25519::PublicKey::from_secret),
-            ristretto_dh: self.key.ristretto_dh.as_ref().map(ristretto_dh::PublicKey::from_secret)
+            ristrettodh: self.key.ristrettodh.as_ref().map(ristrettodh::PublicKey::from_secret)
         }
     }
 }
@@ -148,16 +149,16 @@ impl<'a> And<'a> {
                     alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
                 };
 
-                let ska = try_unwrap!(&ska.ristretto_dh; RistrettoDH::NAME);
-                let pka = ristretto_dh::PublicKey::from_secret(ska);
-                let pkb = try_unwrap!(&pkb.ristretto_dh; RistrettoDH::NAME);
+                let ska = try_unwrap!(&ska.ristrettodh; RistrettoDH::NAME);
+                let pka = ristrettodh::PublicKey::from_secret(ska);
+                let pkb = try_unwrap!(&pkb.ristrettodh; RistrettoDH::NAME);
 
                 let smap = key::PublicKey {
-                    ristretto_dh: Some(pka),
+                    ristrettodh: Some(pka),
                     ..Default::default()
                 };
                 let rmap = key::ShortPublicKey {
-                    ristretto_dh: Some(Short::from(pkb)),
+                    ristrettodh: Some(Short::from(pkb)),
                     ..Default::default()
                 };
 
@@ -186,14 +187,14 @@ impl<'a> And<'a> {
 
                 let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
                 let sigpk_a = ed25519::PublicKey::from_secret(sigsk_a);
-                let dhpk_b = try_unwrap!(&pkb.ristretto_dh; RistrettoDH::NAME);
+                let dhpk_b = try_unwrap!(&pkb.ristrettodh; RistrettoDH::NAME);
 
                 let smap = key::PublicKey {
                     ed25519: Some(sigpk_a),
                     ..Default::default()
                 };
                 let rmap = key::ShortPublicKey {
-                    ristretto_dh: Some(Short::from(dhpk_b)),
+                    ristrettodh: Some(Short::from(dhpk_b)),
                     ..Default::default()
                 };
 
@@ -241,8 +242,8 @@ impl<'a> And<'a> {
 
                 let (msg, c): (ooake::Message, Bytes) = DE::from_slice(message)?;
 
-                let dhsk_b = try_unwrap!(&skb.ristretto_dh; RistrettoDH::NAME);
-                let dhpk_a = try_unwrap!(&pka.ristretto_dh; RistrettoDH::NAME);
+                let dhsk_b = try_unwrap!(&skb.ristrettodh; RistrettoDH::NAME);
+                let dhpk_a = try_unwrap!(&pka.ristrettodh; RistrettoDH::NAME);
                 ooake::recv(
                     aead,
                     (idb, dhsk_b),
@@ -259,8 +260,8 @@ impl<'a> And<'a> {
 
                 let (msg, c): (sigae::Message<RistrettoDH>, Bytes) = DE::from_slice(message)?;
 
-                let dhsk_b = try_unwrap!(&skb.ristretto_dh; RistrettoDH::NAME);
-                let dhpk_b = ristretto_dh::PublicKey::from_secret(dhsk_b);
+                let dhsk_b = try_unwrap!(&skb.ristrettodh; RistrettoDH::NAME);
+                let dhpk_b = ristrettodh::PublicKey::from_secret(dhsk_b);
                 let sigpk_a = try_unwrap!(&pka.ed25519; Ed25519::NAME);
                 sigae::recv::<Ed25519, RistrettoDH>(
                     aead,

@@ -6,8 +6,8 @@ extern crate ene_core;
 use rand::{ Rng, OsRng };
 use rand::distributions::Alphanumeric;
 use serde::{ Serialize, Deserialize };
-use ene_core::{ error, Builder };
-use ene_core::proto::{ alg, Protocol };
+use ene_core::{ error, alg, Builder };
+use ene_core::proto::Protocol;
 use ene_core::format::{ Envelope, Version };
 use ene_core::define::Serde;
 
