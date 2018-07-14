@@ -1,19 +1,13 @@
 use std::fmt;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
-use serde_bytes::{ ByteBuf, Bytes };
-use crate::{ key, alg };
+use serde_bytes::ByteBuf;
+use crate::key;
 use crate::define::Packing;
 use crate::proto::{ Protocol };
 
 
-pub type PrivateKey = Envelope<(ID, alg::Encrypt, ByteBuf, ByteBuf)>;
-
-pub type PublicKey = Envelope<(ID, key::PublicKey)>;
-
 pub type Message = Envelope<(Meta, Protocol, ByteBuf)>;
-
-pub type MessageBorrowed<'a> = Envelope<(Meta, Protocol, Bytes<'a>)>;
 
 pub struct ENE;
 
@@ -38,6 +32,12 @@ pub struct Meta {
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 #[derive(Serialize, Deserialize)]
 pub struct Short(pub u128);
+
+impl<T> From<T> for Envelope<T> {
+    fn from(value: T) -> Envelope<T> {
+        Envelope(ENE, Version::default(), value)
+    }
+}
 
 impl Default for Version {
     fn default() -> Version {

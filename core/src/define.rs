@@ -9,7 +9,7 @@ pub trait Packing: Sized {
     fn read_bytes<F, R>(&self, f: F) -> R
         where F: FnOnce(&[u8]) -> R;
 
-    fn from_bytes(bytes: &[u8]) -> error::Result<Self>;
+    fn from_bytes(bytes: &[u8]) -> Result<Self, error::CoreError>;
 }
 
 pub trait Signature {
@@ -32,8 +32,8 @@ pub trait KeyExchange {
     const SHARED_LENGTH: usize;
 
     fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], pk: &Self::PublicKey)
-        -> error::Result<Self::Message>;
-    fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, m: &Self::Message) -> error::Result<()>;
+        -> Result<Self::Message, error::CoreError>;
+    fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, m: &Self::Message) -> Result<(), error::CoreError>;
 }
 
 pub trait AeadCipher {
@@ -41,12 +41,12 @@ pub trait AeadCipher {
     fn nonce_length(&self) -> usize;
     fn tag_length(&self) -> usize;
 
-    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
-    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> error::Result<()>;
+    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), error::CoreError>;
+    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), error::CoreError>;
 }
 
-pub trait Serde {
-    fn to_vec<T: Serialize>(value: &T) -> error::Result<Vec<u8>>;
+pub trait Serde<E> {
+    fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<E>>;
 
-    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> error::Result<T>;
+    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<E>>;
 }

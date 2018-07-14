@@ -47,13 +47,13 @@ impl Packing for Signature {
         f(&self.0.to_bytes())
     }
 
-    fn from_bytes(bytes: &[u8]) -> error::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, error::CoreError> {
         if bytes.len() == Self::BYTES_LENGTH {
             check!(&bytes[..32]);
             check!(&bytes[32..]);
             Ok(Signature(Signature2::from_bytes(bytes)?))
         } else {
-            Err(error::Error::InvalidLength)
+            Err(error::CoreError::InvalidLength)
         }
     }
 }
@@ -101,8 +101,8 @@ impl<'de> Deserialize<'de> for Signature {
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Signature, E> where E: de::Error {
                 match Signature::from_bytes(bytes) {
                     Ok(t) => Ok(t),
-                    Err(error::Error::InvalidLength) => Err(de::Error::invalid_length(bytes.len(), &self)),
-                    Err(error::Error::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
+                    Err(error::CoreError::InvalidLength) => Err(de::Error::invalid_length(bytes.len(), &self)),
+                    Err(error::CoreError::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
                     Err(err) => Err(de::Error::custom(err))
                 }
             }

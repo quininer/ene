@@ -33,7 +33,7 @@ pub fn send<RNG: RngCore + CryptoRng>(
     (idb, PublicKey(bb)): (&str, &PublicKey),
     aad: &[u8],
     plaintext: &[u8]
-) -> error::Result<(Message, Vec<u8>)> {
+) -> Result<(Message, Vec<u8>), error::CoreError> {
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
 
@@ -69,7 +69,7 @@ pub fn recv(
     ristrettodh::Message(xx): &Message,
     aad: &[u8],
     ciphertext: &[u8]
-) -> error::Result<Vec<u8>> {
+) -> Result<Vec<u8>, error::CoreError> {
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
 

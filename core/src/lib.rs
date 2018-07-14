@@ -112,7 +112,7 @@ impl Ene {
 }
 
 impl<'a> And<'a> {
-    pub fn sendto<SER: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> error::Result<Message> {
+    pub fn sendto<SER: Serde<E>, E>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Message, error::Error<E>> {
         use crate::format::{ Meta, Short, Envelope, ENE, Version };
 
         let v = Version::default();
@@ -220,7 +220,7 @@ impl<'a> And<'a> {
         }
     }
 
-    pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> error::Result<Vec<u8>> {
+    pub fn recvfrom<DE: Serde<E>, E>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Vec<u8>, error::Error<E>> {
         let And {
             ene: Ene { id: idb, key: skb },
             target: (ida, pka)
@@ -252,6 +252,7 @@ impl<'a> And<'a> {
                     aad,
                     &c
                 )
+                    .map_err(Into::into)
             },
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = match enc {
@@ -272,6 +273,7 @@ impl<'a> And<'a> {
                     &c,
                     flag
                 )
+                    .map_err(Into::into)
             }
         }
     }

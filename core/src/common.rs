@@ -1,16 +1,16 @@
 macro_rules! check {
     ( serde $e:expr ) => {
-        if subtle::ConstantTimeEq::ct_eq($e, &[0; 32]).unwrap_u8() != 1 {
+        if $e != [0; 32] {
             $e
         } else {
-            return Err(serde::de::Error::custom("Invalid value"))
+            return Err(serde::de::Error::custom("zero value"))
         }
     };
     ( $e:expr ) => {
-        if subtle::ConstantTimeEq::ct_eq($e, &[0; 32]).unwrap_u8() != 1 {
+        if $e != [0; 32] {
             $e
         } else {
-            return Err(error::Error::InvalidValue("zero value"))
+            return Err(crate::error::CoreError::InvalidValue("zero value"))
         }
     }
 }

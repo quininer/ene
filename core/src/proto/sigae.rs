@@ -35,7 +35,7 @@ pub fn send<
     aad: &[u8],
     plaintext: &[u8],
     flag: bool
-) -> error::Result<(Message<KEX>, Vec<u8>)> {
+) -> Result<(Message<KEX>, Vec<u8>), error::CoreError> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
@@ -89,7 +89,7 @@ pub fn recv<
     aad: &[u8],
     ciphertext: &[u8],
     flag: bool
-) -> error::Result<Vec<u8>> {
+) -> Result<Vec<u8>, error::CoreError> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
@@ -131,7 +131,7 @@ pub fn recv<
     if SIG::verify(pka, &sig, hasher.result().as_slice()) {
         Ok(plaintext)
     } else {
-        Err(error::Error::VerificationFailed)
+        Err(error::CoreError::VerificationFailed(SIG::NAME))
     }
 }
 

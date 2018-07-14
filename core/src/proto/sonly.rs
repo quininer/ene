@@ -12,10 +12,10 @@ pub fn recv<SIG: Signature>(
     pk: &SIG::PublicKey,
     sig: &SIG::Signature,
     message: &[u8]
-) -> error::Result<()> {
+) -> Result<(), error::CoreError> {
     if SIG::verify(pk, sig, message) {
         Ok(())
     } else {
-        Err(error::Error::VerificationFailed)
+        Err(error::CoreError::VerificationFailed(SIG::NAME))
     }
 }
