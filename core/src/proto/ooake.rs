@@ -21,7 +21,7 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::scalar::Scalar;
 use crate::key::ristrettodh::{ self, SecretKey, PublicKey };
 use crate::define::AeadCipher;
-use crate::error;
+use crate::error::ProtoError;
 
 
 pub type Message = ristrettodh::Message;
@@ -33,7 +33,7 @@ pub fn send<RNG: RngCore + CryptoRng>(
     (idb, PublicKey(bb)): (&str, &PublicKey),
     aad: &[u8],
     plaintext: &[u8]
-) -> Result<(Message, Vec<u8>), error::CoreError> {
+) -> Result<(Message, Vec<u8>), ProtoError> {
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
 
@@ -69,7 +69,7 @@ pub fn recv(
     ristrettodh::Message(xx): &Message,
     aad: &[u8],
     ciphertext: &[u8]
-) -> Result<Vec<u8>, error::CoreError> {
+) -> Result<Vec<u8>, ProtoError> {
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
 

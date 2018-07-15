@@ -1,6 +1,6 @@
 use rand::{ Rng, CryptoRng };
 use serde::{ Serialize, Deserialize };
-use crate::error;
+use crate::error::{ self, ProtoError };
 
 
 pub trait Packing: Sized {
@@ -9,7 +9,7 @@ pub trait Packing: Sized {
     fn read_bytes<F, R>(&self, f: F) -> R
         where F: FnOnce(&[u8]) -> R;
 
-    fn from_bytes(bytes: &[u8]) -> Result<Self, error::CoreError>;
+    fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError>;
 }
 
 pub trait Signature {
@@ -32,8 +32,8 @@ pub trait KeyExchange {
     const SHARED_LENGTH: usize;
 
     fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], pk: &Self::PublicKey)
-        -> Result<Self::Message, error::CoreError>;
-    fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, m: &Self::Message) -> Result<(), error::CoreError>;
+        -> Result<Self::Message, ProtoError>;
+    fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, m: &Self::Message) -> Result<(), ProtoError>;
 }
 
 pub trait AeadCipher {
@@ -41,8 +41,8 @@ pub trait AeadCipher {
     fn nonce_length(&self) -> usize;
     fn tag_length(&self) -> usize;
 
-    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), error::CoreError>;
-    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), error::CoreError>;
+    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), ProtoError>;
+    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), ProtoError>;
 }
 
 pub trait Serde<E> {

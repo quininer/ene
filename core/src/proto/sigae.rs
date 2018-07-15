@@ -14,7 +14,7 @@ use sha3::{ Sha3_512, Shake256 };
 use digest::{ Digest, Input, ExtendableOutput, XofReader };
 use crate::key::ed25519;
 use crate::define::{ Packing, Signature, KeyExchange, AeadCipher };
-use crate::error;
+use crate::error::ProtoError;
 
 
 #[derive(Serialize, Deserialize)]
@@ -35,7 +35,7 @@ pub fn send<
     aad: &[u8],
     plaintext: &[u8],
     flag: bool
-) -> Result<(Message<KEX>, Vec<u8>), error::CoreError> {
+) -> Result<(Message<KEX>, Vec<u8>), ProtoError> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
@@ -89,7 +89,7 @@ pub fn recv<
     aad: &[u8],
     ciphertext: &[u8],
     flag: bool
-) -> Result<Vec<u8>, error::CoreError> {
+) -> Result<Vec<u8>, ProtoError> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
     let mut aekey = vec![0; aead.key_length()];
     let mut nonce = vec![0; aead.nonce_length()];
@@ -131,7 +131,7 @@ pub fn recv<
     if SIG::verify(pka, &sig, hasher.result().as_slice()) {
         Ok(plaintext)
     } else {
-        Err(error::CoreError::VerificationFailed(SIG::NAME))
+        Err(ProtoError::VerificationFailed(SIG::NAME))
     }
 }
 

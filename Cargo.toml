@@ -13,10 +13,14 @@ members = [ "core" ]
 [dependencies]
 ene-core = { path = "./core" }
 
+argon2rs = "*"
+rand = "*"
+serde_bytes = "*"
+serde_cbor = "*"
+
 failure = "*"
-structopt = { version = "0.1" }
-structopt-derive = { version = "0.1" }
-# clap-verbosity-flag = "*"
+structopt = { version = "0.2" }
+structopt-derive = { version = "0.2" }
 # human-panic = "*"
 directories = "*"
 toml = "*"

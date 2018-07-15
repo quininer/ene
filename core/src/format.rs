@@ -2,12 +2,20 @@ use std::fmt;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
 use serde_bytes::ByteBuf;
-use crate::key;
+use crate::{ alg, key };
 use crate::define::Packing;
 use crate::proto::{ Protocol };
 
 
+pub type PrivateKey = Envelope<(ID, alg::Encrypt, ByteBuf, ByteBuf)>;
+
+pub type PrivateKeyBorrowed<'a> = Envelope<(ID, alg::Encrypt, &'a [u8], &'a [u8])>;
+
+pub type PublicKey = Envelope<(ID, key::PublicKey)>;
+
 pub type Message = Envelope<(Meta, Protocol, ByteBuf)>;
+
+pub type MessageBorrowed<'a> = Envelope<(Meta, Protocol, &'a [u8])>;
 
 pub struct ENE;
 

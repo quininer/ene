@@ -10,7 +10,7 @@ macro_rules! check {
         if $e != [0; 32] {
             $e
         } else {
-            return Err(crate::error::CoreError::InvalidValue("zero value"))
+            return Err(crate::error::ProtoError::InvalidValue("zero value"))
         }
     }
 }

@@ -1,8 +1,7 @@
 #[derive(Debug, Fail)]
-#[non_exhaustive]
 pub enum Error<E> {
-    #[fail(display = "Core Error: {}", _0)]
-    Core(CoreError),
+    #[fail(display = "Protocol Error: {}", _0)]
+    Proto(ProtoError),
 
     #[fail(display = "Rand Error: {}", _0)]
     Rand(rand::Error),
@@ -15,8 +14,7 @@ pub enum Error<E> {
 }
 
 #[derive(Debug, Fail)]
-#[non_exhaustive]
-pub enum CoreError {
+pub enum ProtoError {
     #[fail(display = "Fail to pass verification: {}", _0)]
     VerificationFailed(&'static str),
 
@@ -30,9 +28,9 @@ pub enum CoreError {
     Ed25519(ed25519_dalek::DecodingError)
 }
 
-impl From<ed25519_dalek::DecodingError> for CoreError {
-    fn from(err: ed25519_dalek::DecodingError) -> CoreError {
-        CoreError::Ed25519(err)
+impl From<ed25519_dalek::DecodingError> for ProtoError {
+    fn from(err: ed25519_dalek::DecodingError) -> ProtoError {
+        ProtoError::Ed25519(err)
     }
 }
 
@@ -42,8 +40,8 @@ impl<E> From<rand::Error> for Error<E> {
     }
 }
 
-impl<E> From<CoreError> for Error<E> {
-    fn from(err: CoreError) -> Error<E> {
-        Error::Core(err)
+impl<E> From<ProtoError> for Error<E> {
+    fn from(err: ProtoError) -> Error<E> {
+        Error::Proto(err)
     }
 }

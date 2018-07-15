@@ -1,5 +1,5 @@
 use crate::define::Signature;
-use crate::error;
+use crate::error::ProtoError;
 
 
 pub type Message<SIG> = <SIG as Signature>::Signature;
@@ -12,10 +12,10 @@ pub fn recv<SIG: Signature>(
     pk: &SIG::PublicKey,
     sig: &SIG::Signature,
     message: &[u8]
-) -> Result<(), error::CoreError> {
+) -> Result<(), ProtoError> {
     if SIG::verify(pk, sig, message) {
         Ok(())
     } else {
-        Err(error::CoreError::VerificationFailed(SIG::NAME))
+        Err(ProtoError::VerificationFailed(SIG::NAME))
     }
 }

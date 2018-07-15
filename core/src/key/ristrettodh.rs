@@ -7,7 +7,7 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::ristretto::{ RistrettoPoint, CompressedRistretto };
 use curve25519_dalek::scalar::Scalar;
 use crate::define::{ Packing, KeyExchange };
-use crate::error;
+use crate::error::ProtoError;
 
 
 #[derive(Clone, Debug)]
@@ -56,8 +56,8 @@ macro_rules! de {
                     {
                         match $t::from_bytes(v) {
                             Ok(t) => Ok(t),
-                            Err(error::CoreError::InvalidLength) => Err(de::Error::invalid_length(v.len(), &self)),
-                            Err(error::CoreError::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
+                            Err(ProtoError::InvalidLength) => Err(de::Error::invalid_length(v.len(), &self)),
+                            Err(ProtoError::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
                             Err(err) => Err(de::Error::custom(err))
                         }
                     }
@@ -82,7 +82,7 @@ impl Packing for PublicKey {
         f(self.0.compress().as_bytes())
     }
 
-    fn from_bytes(bytes: &[u8]) -> Result<Self, error::CoreError> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError> {
         if bytes.len() == Self::BYTES_LENGTH {
             check!(bytes);
             let mut arr = [0u8; 32];
@@ -90,9 +90,9 @@ impl Packing for PublicKey {
             CompressedRistretto(arr)
                 .decompress()
                 .map(PublicKey)
-                .ok_or(error::CoreError::InvalidValue("decompression failed"))
+                .ok_or(ProtoError::InvalidValue("decompression failed"))
         } else {
-            Err(error::CoreError::InvalidLength)
+            Err(ProtoError::InvalidLength)
         }
     }
 }
@@ -106,7 +106,7 @@ impl Packing for Message {
         f(self.0.compress().as_bytes())
     }
 
-    fn from_bytes(bytes: &[u8]) -> Result<Self, error::CoreError> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError> {
         if bytes.len() == Self::BYTES_LENGTH {
             check!(bytes);
             let mut arr = [0u8; 32];
@@ -114,9 +114,9 @@ impl Packing for Message {
             CompressedRistretto(arr)
                 .decompress()
                 .map(Message)
-                .ok_or(error::CoreError::InvalidValue("decompression failed"))
+                .ok_or(ProtoError::InvalidValue("decompression failed"))
         } else {
-            Err(error::CoreError::InvalidLength)
+            Err(ProtoError::InvalidLength)
         }
     }
 }
@@ -132,7 +132,7 @@ impl KeyExchange for RistrettoDH {
     const NAME: &'static str = "RistrettoDH";
     const SHARED_LENGTH: usize = 64;
 
-    fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], pk: &Self::PublicKey) -> Result<Self::Message, error::CoreError> {
+    fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], pk: &Self::PublicKey) -> Result<Self::Message, ProtoError> {
         let PublicKey(pk) = pk;
         let ek = Scalar::random(r);
         let m = &ek * &RISTRETTO_BASEPOINT_TABLE;
@@ -144,7 +144,7 @@ impl KeyExchange for RistrettoDH {
         Ok(Message(m))
     }
 
-    fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, Message(m): &Self::Message) -> Result<(), error::CoreError> {
+    fn exchange_from(sharedkey: &mut [u8], sk: &Self::PrivateKey, Message(m): &Self::Message) -> Result<(), ProtoError> {
         let SecretKey(sk, _) = sk;
 
         let k = (sk * m).compress();

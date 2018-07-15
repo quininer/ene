@@ -3,7 +3,7 @@ use aes::{ Aes128, BlockCipher as _ };
 use colm::{ Colm, NONCE_LENGTH };
 use colm::traits::{ KEY_LENGTH, BLOCK_LENGTH, BlockCipher };
 use crate::define::AeadCipher;
-use crate::error;
+use crate::error::ProtoError;
 
 
 pub struct Aes128Colm0;
@@ -13,13 +13,13 @@ impl AeadCipher for Aes128Colm0 {
     fn nonce_length(&self) -> usize { NONCE_LENGTH }
     fn tag_length(&self) -> usize { BLOCK_LENGTH }
 
-    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> Result<(), error::CoreError> {
+    fn seal(&self, key: &[u8], nonce: &[u8], aad: &[u8], m: &[u8], c: &mut [u8]) -> Result<(), ProtoError> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
             m.len() + BLOCK_LENGTH != c.len() ||
             m.is_empty()
         {
-            return Err(error::CoreError::InvalidLength)
+            return Err(ProtoError::InvalidLength)
         };
 
         let key = array_ref!(key, 0, KEY_LENGTH);
@@ -47,13 +47,13 @@ impl AeadCipher for Aes128Colm0 {
         Ok(())
     }
 
-    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], c: &[u8], m: &mut [u8]) -> Result<(), error::CoreError> {
+    fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], c: &[u8], m: &mut [u8]) -> Result<(), ProtoError> {
         if key.len() != KEY_LENGTH ||
             nonce.len() != NONCE_LENGTH ||
             c.len() - BLOCK_LENGTH != m.len() ||
             m.is_empty()
         {
-            return Err(error::CoreError::InvalidLength)
+            return Err(ProtoError::InvalidLength)
         };
 
         let key = array_ref!(key, 0, KEY_LENGTH);
@@ -81,7 +81,7 @@ impl AeadCipher for Aes128Colm0 {
         if flag {
             Ok(())
         } else {
-            Err(error::CoreError::VerificationFailed("Aes128Colm0"))
+            Err(ProtoError::VerificationFailed("Aes128Colm0"))
         }
     }
 }

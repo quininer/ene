@@ -61,6 +61,13 @@ impl Default for Builder {
 }
 
 impl Builder {
+    pub fn empty() -> Self {
+        Builder {
+            ed25519: false,
+            ristrettodh: false
+        }
+    }
+
     pub fn generate<RNG: Rng + CryptoRng>(&self, id: &str, rng: &mut RNG) -> Ene {
         let ed25519_sk =
             if self.ed25519 { Some(ed25519::SecretKey::generate(rng)) }
