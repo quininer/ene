@@ -24,12 +24,12 @@ pub enum ProtoError {
     #[fail(display = "Invalid value: {}", _0)]
     InvalidValue(&'static str),
 
-    #[fail(display = "Ed25519 Decoding Error: {}", _0)]
-    Ed25519(ed25519_dalek::DecodingError)
+    #[fail(display = "Ed25519 Signature Error: {}", _0)]
+    Ed25519(ed25519_dalek::SignatureError)
 }
 
-impl From<ed25519_dalek::DecodingError> for ProtoError {
-    fn from(err: ed25519_dalek::DecodingError) -> ProtoError {
+impl From<ed25519_dalek::SignatureError> for ProtoError {
+    fn from(err: ed25519_dalek::SignatureError) -> ProtoError {
         ProtoError::Ed25519(err)
     }
 }

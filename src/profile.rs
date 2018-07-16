@@ -1,13 +1,14 @@
-use std::fs::File;
+use std::fs::{ self, File };
 use std::path::Path;
 use rand::{ Rng, OsRng };
 use failure::{ Error, err_msg };
 use argon2rs::{ Argon2, Variant };
 use serde_bytes::ByteBuf;
 use serde_cbor as cbor;
+use structopt::StructOpt;
 use directories::ProjectDirs;
 use crate::core::{ alg, key, Builder, Ene };
-use crate::core::format::{ PrivateKey, PrivateKeyBorrowed, Envelope };
+use crate::core::format::{ PrivateKey, Envelope };
 use crate::core::aead::aes128colm0;
 use crate::core::define::AeadCipher;
 use crate::opts::Profile;
@@ -15,7 +16,31 @@ use crate::common::askpass;
 
 
 impl Profile {
-    pub fn init(&self, output: &Path) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs) -> Result<(), Error> {
+        let sk_path = dir.data_local_dir().join("ene.key");
+
+        if self.init {
+            check!(is_file sk_path);
+            self.init(&sk_path)?;
+        } else if let Some(path) = self.import {
+            check!(is_file sk_path);
+            fs::copy(path, sk_path)?;
+        } else if let Some(mut path) = self.export {
+            if path.is_dir() {
+                path = path.join("ene.key");
+            }
+
+            check!(is_file path);
+            fs::copy(sk_path, path)?;
+        } else {
+            Profile::clap().print_help()?;
+            println!();
+        }
+
+        Ok(())
+    }
+
+    fn init(&self, output: &Path) -> Result<(), Error> {
         let id = self.id.as_ref().unwrap();
         let enc = self.encrypt.unwrap_or(alg::Encrypt::Aes128Colm0);
 
@@ -79,7 +104,7 @@ pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::
     )))
 }
 
-pub fn open(key: &[u8], sk_packed: &PrivateKeyBorrowed) -> Result<Ene, Error> {
+pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<Ene, Error> {
     let Envelope(_, _, (id, enc, salt, c)) = sk_packed;
 
     let aead = match enc {

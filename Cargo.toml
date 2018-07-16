@@ -19,12 +19,12 @@ serde_bytes = "*"
 serde_cbor = "*"
 
 failure = "*"
-structopt = { version = "0.2" }
-structopt-derive = { version = "0.2" }
+structopt = "0.2"
 # human-panic = "*"
 directories = "*"
 toml = "*"
 termcolor = "*"
 ttyaskpass = { path = "../ttyaskpass" }
 
+fs2 = "*"
 sled = "*"

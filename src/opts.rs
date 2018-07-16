@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use structopt::clap::ArgGroup;
 use crate::core::alg;
 
 
@@ -15,39 +16,71 @@ pub enum Options {
     RecvFrom,
 
     #[structopt(name = "contact", about = "Contact")]
-    Contact
+    Contact(Contact)
 }
 
 #[derive(Debug, StructOpt)]
+#[structopt(raw(group = "arg_group(\"profile\")"))]
 pub struct Profile {
     #[structopt(
         long = "init",
-        conflicts_with = "import", conflicts_with = "export",
-        requires = "id",
+        group = "profile", requires = "id",
         display_order = 1
     )]
     pub init: bool,
 
-    #[structopt(long = "id")]
+    /// e.g. alice@core.ene
+    #[structopt(long = "id", value_name = "ID", display_order = 1)]
     pub id: Option<String>,
 
-    #[structopt(short = "a", long = "algorithm")]
+    /// e.g. ed25519,ristrettodh
+    #[structopt(short = "a", long = "algorithm", value_name = "STRING")]
     pub algorithm: Option<String>,
 
-    #[structopt(short = "e", long = "encrypt-algorithm")]
+    /// e.g. aes128colm0
+    #[structopt(short = "x", long = "encrypt-algorithm", value_name = "STRING")]
     pub encrypt: Option<alg::Encrypt>,
 
     #[structopt(
-        long = "import",
-        conflicts_with = "export",
+        short = "i", long = "import",
+        value_name = "PATH",
+        group = "profile",
         parse(from_os_str)
     )]
     pub import: Option<PathBuf>,
 
     #[structopt(
-        long = "export",
-        conflicts_with = "import",
+        short = "e", long = "export",
+        value_name = "PATH",
+        group = "profile",
         parse(from_os_str)
     )]
     pub export: Option<PathBuf>,
+}
+
+#[derive(Debug, StructOpt)]
+#[structopt(raw(group = "arg_group(\"contact\")"))]
+pub struct Contact {
+    #[structopt(long = "list", group = "contact")]
+    pub list: bool,
+
+    #[structopt(name = "id", value_name = "ID")]
+    pub id: Option<String>,
+
+    #[structopt(short = "i", long = "import", parse(from_os_str), group = "contact")]
+    pub import: Option<PathBuf>,
+
+    #[structopt(
+        short = "e", long = "export",
+        requires = "id", group = "contact",
+        parse(from_os_str)
+    )]
+    pub export: Option<PathBuf>,
+
+    #[structopt(short = "d", long = "delete", requires = "id", group = "contact")]
+    pub delete: bool,
+}
+
+fn arg_group(name: &'static str) -> ArgGroup<'static> {
+    ArgGroup::with_name(name).required(true)
 }

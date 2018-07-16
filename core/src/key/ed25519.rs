@@ -127,6 +127,6 @@ impl Signature3 for Ed25519 {
     }
 
     fn verify(PublicKey(pk): &Self::PublicKey, Signature(sig): &Self::Signature, message: &[u8]) -> bool {
-        pk.verify::<Sha3_512>(message, sig)
+        pk.verify::<Sha3_512>(message, sig).is_ok()
     }
 }

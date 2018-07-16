@@ -24,8 +24,8 @@ pub enum Encrypt {
 
 
 #[derive(Debug, Fail)]
-#[fail(display = "unknown algorithm")]
-pub struct UnknownAlgorithm;
+#[fail(display = "unknown algorithm: {}", _0)]
+pub struct UnknownAlgorithm(String);
 
 impl FromStr for Encrypt {
     type Err = UnknownAlgorithm;
@@ -33,7 +33,7 @@ impl FromStr for Encrypt {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "aes128colm0" => Ok(Encrypt::Aes128Colm0),
-            _ => Err(UnknownAlgorithm)
+            _ => Err(UnknownAlgorithm(s.into()))
         }
     }
 }

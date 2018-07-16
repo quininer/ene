@@ -7,15 +7,11 @@ use crate::define::Packing;
 use crate::proto::{ Protocol };
 
 
-pub type PrivateKey = Envelope<(ID, alg::Encrypt, ByteBuf, ByteBuf)>;
+pub type PrivateKey = Envelope<(String, alg::Encrypt, ByteBuf, ByteBuf)>;
 
-pub type PrivateKeyBorrowed<'a> = Envelope<(ID, alg::Encrypt, &'a [u8], &'a [u8])>;
-
-pub type PublicKey = Envelope<(ID, key::PublicKey)>;
+pub type PublicKey = Envelope<(String, key::PublicKey)>;
 
 pub type Message = Envelope<(Meta, Protocol, ByteBuf)>;
-
-pub type MessageBorrowed<'a> = Envelope<(Meta, Protocol, &'a [u8])>;
 
 pub struct ENE;
 
@@ -26,15 +22,13 @@ pub struct Version(pub u16);
 #[derive(Serialize, Deserialize)]
 pub struct Envelope<T>(pub ENE, pub Version, pub T);
 
-pub type ID = String;
-
 #[derive(Serialize, Deserialize)]
 pub struct Meta {
-    /// Sender ID and PublicKey
-    pub s: (ID, key::PublicKey),
+    /// Sender String and PublicKey
+    pub s: (String, key::PublicKey),
 
-    /// Receiver ID and Short PublicKey
-    pub r: Option<(ID, key::ShortPublicKey)>
+    /// Receiver String and Short PublicKey
+    pub r: Option<(String, key::ShortPublicKey)>
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
