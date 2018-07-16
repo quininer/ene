@@ -109,13 +109,6 @@ impl Ene {
     pub fn into_secret(self) -> key::SecretKey {
         self.key
     }
-
-    pub fn to_public(&self) -> key::PublicKey {
-        key::PublicKey {
-            ed25519: self.key.ed25519.as_ref().map(ed25519::PublicKey::from_secret),
-            ristrettodh: self.key.ristrettodh.as_ref().map(ristrettodh::PublicKey::from_secret)
-        }
-    }
 }
 
 impl<'a> And<'a> {

@@ -1,3 +1,4 @@
+use std::io::{ self, Write };
 use std::fs::{ self, File };
 use std::path::Path;
 use rand::{ Rng, OsRng };
@@ -8,7 +9,7 @@ use serde_cbor as cbor;
 use structopt::StructOpt;
 use directories::ProjectDirs;
 use crate::core::{ alg, key, Builder, Ene };
-use crate::core::format::{ PrivateKey, Envelope };
+use crate::core::format::{ PrivateKey, PublicKey, Envelope };
 use crate::core::aead::aes128colm0;
 use crate::core::define::AeadCipher;
 use crate::opts::Profile;
@@ -25,7 +26,21 @@ impl Profile {
         } else if let Some(path) = self.import {
             check!(is_file sk_path);
             fs::copy(path, sk_path)?;
-        } else if let Some(mut path) = self.export {
+        } else if let Some(mut path) = self.export_public {
+            let sk_packed = cbor::from_reader(&mut File::open(&sk_path)?)?;
+            let sk = askpass("Password:", |pass|
+                open(pass.as_bytes(), &sk_packed)
+            )?;
+            let id = &(sk_packed.2).0;
+
+            if path.is_dir() {
+                path = path.join(format!("{}.ene.pk", id));
+            }
+
+            let pk = sk.as_secret().to_public();
+            let pk_packed: PublicKey = Envelope::from((id.to_owned(), pk));
+            cbor::to_writer(&mut File::create(&path)?, &pk_packed)?;
+        } else if let Some(mut path) = self.export_secret {
             if path.is_dir() {
                 path = path.join("ene.key");
             }
@@ -33,8 +48,9 @@ impl Profile {
             check!(is_file path);
             fs::copy(sk_path, path)?;
         } else {
-            Profile::clap().print_help()?;
-            println!();
+            let mut stdout = io::stdout();
+            Profile::clap().write_help(&mut stdout)?;
+            writeln!(&mut stdout)?;
         }
 
         Ok(())

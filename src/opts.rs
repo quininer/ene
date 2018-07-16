@@ -50,12 +50,20 @@ pub struct Profile {
     pub import: Option<PathBuf>,
 
     #[structopt(
-        short = "e", long = "export",
+        short = "e", long = "export-public", alias = "export",
         value_name = "PATH",
         group = "profile",
         parse(from_os_str)
     )]
-    pub export: Option<PathBuf>,
+    pub export_public: Option<PathBuf>,
+
+    #[structopt(
+        long = "export-secret",
+        value_name = "PATH",
+        group = "profile",
+        parse(from_os_str)
+    )]
+    pub export_secret: Option<PathBuf>,
 }
 
 #[derive(Debug, StructOpt)]

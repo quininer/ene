@@ -38,6 +38,25 @@ impl PublicKey {
     }
 }
 
+impl Packing for PublicKey {
+    const BYTES_LENGTH: usize = 32;
+
+    fn read_bytes<F, R>(&self, f: F) -> R
+        where F: FnOnce(&[u8]) -> R
+    {
+        f(&self.0.to_bytes())
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError> {
+        if bytes.len() == Self::BYTES_LENGTH {
+            check!(bytes);
+            Ok(PublicKey(PublicKey2::from_bytes(bytes)?))
+        } else {
+            Err(ProtoError::InvalidLength)
+        }
+    }
+}
+
 impl Packing for Signature {
     const BYTES_LENGTH: usize = 64;
 
@@ -72,11 +91,11 @@ impl<'de> Deserialize<'de> for PublicKey {
             }
 
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<PublicKey, E> where E: de::Error {
-                if let Ok(pk) = PublicKey2::from_bytes(bytes) {
-                    check!(serde bytes);
-                    Ok(PublicKey(pk))
-                } else {
-                    Err(de::Error::invalid_length(bytes.len(), &self))
+                match PublicKey::from_bytes(bytes) {
+                    Ok(t) => Ok(t),
+                    Err(ProtoError::InvalidLength) => Err(de::Error::invalid_length(bytes.len(), &self)),
+                    Err(ProtoError::InvalidValue(msg)) => Err(de::Error::invalid_value(de::Unexpected::Other(msg), &self)),
+                    Err(err) => Err(de::Error::custom(err))
                 }
             }
         }

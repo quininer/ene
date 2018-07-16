@@ -14,10 +14,10 @@ macro_rules! info {
 
 macro_rules! warn {
     ( $e:expr ) => {
-        //
+        eprintln!($e)
     };
     ( $fmt:expr, $( $args:tt )+ ) => {
-        //
+        eprintln!($fmt, $( $args )*)
     };
 }
 

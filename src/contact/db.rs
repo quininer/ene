@@ -9,7 +9,7 @@ use crate::core::key;
 
 pub struct Db {
     tree: ManuallyDrop<Tree>,
-    lock: Option<PathBuf>
+    lock: PathBuf
 }
 
 macro_rules! check_lock {
@@ -26,32 +26,10 @@ impl Db {
             .path(path)
             .build();
 
-        let lock_path = path.with_extension(".read.lock");
-        check_lock!(lock_path);
-
-        let lock_path = path.with_extension(".lock");
+        let lock_path = path.with_extension("lock");
         check_lock!(lock_path);
 
         fs::File::create(&lock_path)?;
-
-        Ok(Db {
-            tree: ManuallyDrop::new(Tree::start(config)?),
-            lock: Some(lock_path)
-        })
-    }
-
-    pub fn read_only(path: &Path) -> Result<Db, Error> {
-        let config = ConfigBuilder::new()
-            .path(path)
-            .read_only(true)
-            .build();
-
-        let lock_path = path.with_extension(".lock");
-        check_lock!(lock_path);
-
-        let lock_path = path.with_extension(".read.lock");
-        let lock_path = fs::File::create(&lock_path).ok()
-            .map(|_| lock_path);
 
         Ok(Db {
             tree: ManuallyDrop::new(Tree::start(config)?),
@@ -72,6 +50,12 @@ impl Db {
         let pk = cbor::to_vec(pk)?;
 
         self.tree.set(id, pk).map_err(Into::into)
+    }
+
+    pub fn del(&self, id: &str) -> Result<(), Error> {
+        self.tree.del(id.as_bytes())
+            .map(drop)
+            .map_err(Into::into)
     }
 
     pub fn filter(&'a self, start: &'a str) -> Filter<'a> {
@@ -115,8 +99,6 @@ impl Drop for Db {
             ManuallyDrop::drop(&mut self.tree);
         }
 
-        if let Some(ref lock_path) = self.lock {
-            let _ = fs::remove_file(lock_path);
-        }
+        let _ = fs::remove_file(&self.lock);
     }
 }
