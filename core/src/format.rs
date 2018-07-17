@@ -3,9 +3,9 @@ use std::marker::PhantomData;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
 use serde::de::{ self, Visitor, Unexpected };
 use serde_bytes::ByteBuf;
-use crate::{ alg, key };
+use crate::key;
 use crate::define::{ Packing, Type };
-use crate::proto::{ Protocol };
+use crate::alg::{ self, Protocol };
 
 
 pub type PrivateKey = Envelope<SK, (String, alg::Encrypt, ByteBuf, ByteBuf)>;
@@ -32,7 +32,8 @@ impl Type for MSG {
     const NAME: &'static str = "MSG";
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct Version(pub u16);
 
@@ -91,7 +92,8 @@ impl<'de, T: Type> Deserialize<'de> for ENE<T> {
             type Value = ENE<T>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("ENE str")
+                formatter.write_str("ENE")?;
+                formatter.write_str(T::NAME)
             }
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>

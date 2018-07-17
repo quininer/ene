@@ -1,4 +1,4 @@
-#![feature(non_exhaustive, underscore_imports, try_from)]
+#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
@@ -29,7 +29,8 @@ pub mod error;
 use rand::{ Rng, CryptoRng, OsRng };
 use serde_bytes::{ ByteBuf, Bytes };
 use crate::format::Message;
-use crate::proto::{ Protocol, ooake, sigae, sonly };
+use crate::alg::Protocol;
+use crate::proto::{ ooake, sigae, sonly };
 use crate::key::ed25519::{ self, Ed25519 };
 use crate::key::ristrettodh::{ self, RistrettoDH };
 use crate::aead::aes128colm0::Aes128Colm0;

@@ -1,3 +1,6 @@
+use crate::alg::ParseError;
+
+
 #[derive(Debug, Fail)]
 pub enum Error<E> {
     #[fail(display = "Protocol Error: {}", _0)]
@@ -6,8 +9,8 @@ pub enum Error<E> {
     #[fail(display = "Rand Error: {}", _0)]
     Rand(rand::Error),
 
-    #[fail(display = "{} algorithm does not support", _0)]
-    Unsupported(&'static str),
+    #[fail(display = "Parse Error: {}", _0)]
+    Parse(ParseError),
 
     #[fail(display = "Format Error: {}", _0)]
     Format(E)

@@ -1,4 +1,4 @@
-#![feature(termination_trait_lib, process_exitcode_placeholder)]
+#![feature(nll, termination_trait_lib, process_exitcode_placeholder)]
 
 #[macro_use] extern crate structopt;
 extern crate argon2rs;
@@ -36,7 +36,7 @@ fn start() -> Result<(), Error> {
     match Options::from_args() {
         Options::Profile(profile) => profile.exec(&dir)?,
         Options::Contact(contact) => contact.exec(&dir)?,
-        Options::SendTo => unimplemented!(),
+        Options::SendTo(sendto) => sendto.exec(&dir)?,
         Options::RecvFrom => unimplemented!()
     }
 

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use structopt::clap::ArgGroup;
-use crate::core::alg;
+use crate::core::alg::{ self, Protocol };
 
 
 #[derive(Debug, StructOpt)]
@@ -10,7 +10,7 @@ pub enum Options {
     Profile(Profile),
 
     #[structopt(name = "sendto", about = "SendTo")]
-    SendTo,
+    SendTo(SendTo),
 
     #[structopt(name = "recvfrom", about = "RecvFrom")]
     RecvFrom,
@@ -87,6 +87,33 @@ pub struct Contact {
 
     #[structopt(short = "d", long = "delete", requires = "id", group = "contact")]
     pub delete: bool,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct SendTo {
+    #[structopt(name = "id", value_name = "ID")]
+    target: String,
+
+    #[structopt(
+        short = "i", long = "input",
+        value_name = "PATH",
+        parse(from_os_str)
+    )]
+    input: PathBuf,
+
+    #[structopt(
+        short = "o", long = "output",
+        value_name = "PATH",
+        parse(from_os_str)
+    )]
+    output: Option<PathBuf>,
+
+    #[structopt(
+        short = "p", long = "protocol",
+        value_name = "PROTOCOL",
+        default_value = "ooake-ristrettodh-aes128colm0"
+    )]
+    protocol: Protocol
 }
 
 fn arg_group(name: &'static str) -> ArgGroup<'static> {
