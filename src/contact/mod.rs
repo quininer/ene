@@ -6,7 +6,7 @@ use failure::{ Error, err_msg };
 use structopt::StructOpt;
 use directories::ProjectDirs;
 use serde_cbor as cbor;
-use crate::core::format::{ Short, PublicKey, Envelope };
+use crate::core::format::{ PublicKey, Envelope };
 use crate::opts::Contact;
 use self::db::Db;
 
@@ -42,7 +42,7 @@ impl Contact {
             let db = Db::new(&db_path)?;
 
             let pk = db.get(&id)?.ok_or_else(|| err_msg("empty"))?;
-            let pk_encoded = Envelope::from((id.to_owned(), pk));
+            let pk_encoded: PublicKey = Envelope::from((id.to_owned(), pk));
 
             cbor::to_writer(&mut File::create(&path)?, &pk_encoded)?;
         } else if self.delete {

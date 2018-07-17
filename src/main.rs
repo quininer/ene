@@ -1,9 +1,9 @@
 #![feature(termination_trait_lib, process_exitcode_placeholder)]
 
-#[macro_use] extern crate failure;
 #[macro_use] extern crate structopt;
 extern crate argon2rs;
 extern crate rand;
+extern crate failure;
 extern crate serde_bytes;
 extern crate serde_cbor;
 extern crate directories;
@@ -18,7 +18,7 @@ mod profile;
 mod contact;
 
 use std::fs;
-use failure::{ Error, err_msg };
+use failure::Error;
 use structopt::StructOpt;
 use directories::ProjectDirs;
 use crate::common::Exit;

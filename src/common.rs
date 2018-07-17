@@ -1,6 +1,6 @@
-use std::{ io, env };
+use std::env;
 use std::process::{ Command, Termination, ExitCode };
-use failure::{ Fail, Error };
+use failure::Error;
 
 
 macro_rules! info {

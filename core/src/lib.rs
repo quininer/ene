@@ -113,9 +113,7 @@ impl Ene {
 
 impl<'a> And<'a> {
     pub fn sendto<SER: Serde<E>, E>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Message, error::Error<E>> {
-        use crate::format::{ Meta, Short, Envelope, ENE, Version };
-
-        let v = Version::default();
+        use crate::format::{ Meta, Short, Envelope };
 
         let And {
             ene: Ene { id: ida, key: ska },
@@ -142,7 +140,7 @@ impl<'a> And<'a> {
                     r: None
                 };
 
-                Ok(Envelope(ENE, v, (meta, proto.clone(), msg)))
+                Ok(Envelope::from((meta, proto.clone(), msg)))
             },
             Protocol::Ooake(alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = match enc {
@@ -178,7 +176,7 @@ impl<'a> And<'a> {
                     r: Some((idb.to_string(), rmap))
                 };
 
-                Ok(Envelope(ENE, v, (meta, proto.clone(), msg)))
+                Ok(Envelope::from((meta, proto.clone(), msg)))
             },
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = match enc {
@@ -215,7 +213,7 @@ impl<'a> And<'a> {
                     r: Some((idb.to_string(), rmap))
                 };
 
-                Ok(Envelope(ENE, v, (meta, proto.clone(), msg)))
+                Ok(Envelope::from((meta, proto.clone(), msg)))
             }
         }
     }

@@ -34,11 +34,11 @@ fn test_ene() {
 
     let alice = "alice@core.ene";
     let alice_sk = Builder::default().generate(alice, &mut rng);
-    let alice_pk = alice_sk.to_public();
+    let alice_pk = alice_sk.as_secret().to_public();
 
     let bob = "bob@core.ene";
     let bob_sk = Builder::default().generate(bob, &mut rng);
-    let bob_pk = bob_sk.to_public();
+    let bob_pk = bob_sk.as_secret().to_public();
 
 
     let title = "Alice Send to Bob";

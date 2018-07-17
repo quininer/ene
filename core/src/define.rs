@@ -50,3 +50,7 @@ pub trait Serde<E> {
 
     fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<E>>;
 }
+
+pub trait Type {
+    const NAME: &'static str;
+}
