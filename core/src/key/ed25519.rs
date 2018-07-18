@@ -22,13 +22,7 @@ pub struct Signature(pub(crate) Signature2);
 
 impl SecretKey {
     pub fn generate<RNG: Rng + CryptoRng>(rng: &mut RNG) -> SecretKey {
-        use ed25519_dalek::{ SecretKey as SecretKey2 };
-
-        let mut v = [0; 32];
-        rng.fill(&mut v);
-        let secret = SecretKey2::from_bytes(&v).unwrap();
-        let public = PublicKey2::from_secret::<Sha3_512>(&secret);
-        SecretKey(Keypair { secret, public })
+        SecretKey(Keypair::generate::<Sha3_512, _>(rng))
     }
 }
 

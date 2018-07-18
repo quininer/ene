@@ -51,7 +51,7 @@ pub struct Meta {
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 #[derive(Serialize, Deserialize)]
-pub struct Short(pub u128);
+pub struct Short(pub u64);
 
 impl<T: Type, V> From<V> for Envelope<T, V> {
     fn from(value: V) -> Envelope<T, V> {
@@ -114,17 +114,16 @@ impl<'de, T: Type> Deserialize<'de> for ENE<T> {
 impl<'a, T: Packing> From<&'a T> for Short {
     fn from(t: &'a T) -> Short {
         use std::hash::Hasher;
-        use siphasher::sip128::{ Hasher128, SipHasher };
+        use siphasher::sip128::SipHasher;
 
         let mut hasher = SipHasher::new();
         t.read_bytes(|bytes| hasher.write(bytes));
-        let hash = hasher.finish128();
-        Short(u128::from_bytes(hash.as_bytes()))
+        Short(hasher.finish())
     }
 }
 
 impl fmt::Debug for Short {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#032x}", self.0)
+        write!(f, "{:#016x}", self.0)
     }
 }

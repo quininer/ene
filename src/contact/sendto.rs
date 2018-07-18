@@ -32,7 +32,10 @@ impl SendTo {
             .sendto::<Cbor>(&protocol, aad.as_bytes(), &message)?;
 
         let output = output.unwrap_or_else(|| {
-            let ext = Path::new(input.extension().unwrap_or_default()).with_extension("ene");
+            let mut ext = input.extension()
+                .unwrap_or_default()
+                .to_os_string();
+            ext.push(".ene");
             input.with_extension(ext)
         });
 

@@ -34,15 +34,18 @@ impl Profile {
             let id = &(sk_packed.2).0;
 
             if path.is_dir() {
-                path = path.join(format!("{}.ene.pk", id));
+                path = path.join(format!("{}.ene", id));
             }
 
             let pk = sk.as_secret().to_public();
             let pk_packed: PublicKey = Envelope::from((id.to_owned(), pk));
             cbor::to_writer(&mut File::create(&path)?, &pk_packed)?;
         } else if let Some(mut path) = self.export_secret {
+            let sk_packed = cbor::from_reader(&mut File::open(&sk_path)?)?;
+            let id = &(sk_packed.2).0;
+
             if path.is_dir() {
-                path = path.join("ene.key");
+                path = path.join(format!("{}.ene", id));
             }
 
             check!(is_file path);
