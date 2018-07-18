@@ -27,7 +27,7 @@ impl Profile {
             check!(is_file sk_path);
             fs::copy(path, sk_path)?;
         } else if let Some(mut path) = self.export_public {
-            let sk_packed = cbor::from_reader(&mut File::open(&sk_path)?)?;
+            let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
             let sk = askpass("Password:", |pass|
                 open(pass.as_bytes(), &sk_packed)
             )?;
@@ -41,7 +41,7 @@ impl Profile {
             let pk_packed: PublicKey = Envelope::from((id.to_owned(), pk));
             cbor::to_writer(&mut File::create(&path)?, &pk_packed)?;
         } else if let Some(mut path) = self.export_secret {
-            let sk_packed = cbor::from_reader(&mut File::open(&sk_path)?)?;
+            let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
             let id = &(sk_packed.2).0;
 
             if path.is_dir() {

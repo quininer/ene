@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::PathBuf;
 use std::fs::{ self, File };
 use failure::{ Error, err_msg };
 use serde_cbor as cbor;
@@ -32,10 +32,13 @@ impl SendTo {
             .sendto::<Cbor>(&protocol, aad.as_bytes(), &message)?;
 
         let output = output.unwrap_or_else(|| {
-            let mut ext = input.extension()
-                .unwrap_or_default()
-                .to_os_string();
-            ext.push(".ene");
+            let ext = if let Some(ext) = input.extension() {
+                let mut ext = ext.to_os_string();
+                ext.push(".ene");
+                PathBuf::from(ext)
+            } else {
+                PathBuf::from("ene")
+            };
             input.with_extension(ext)
         });
 

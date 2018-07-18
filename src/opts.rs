@@ -122,6 +122,29 @@ pub struct SendTo {
     pub associated_data: Option<String>
 }
 
+#[derive(Debug, StructOpt)]
+pub struct RecvFrom {
+    #[structopt(
+        short = "i", long = "input",
+        value_name = "PATH",
+        parse(from_os_str)
+    )]
+    pub input: PathBuf,
+
+    #[structopt(
+        short = "o", long = "output",
+        value_name = "PATH",
+        parse(from_os_str)
+    )]
+    pub output: Option<PathBuf>,
+
+    #[structopt(
+        long = "associated-data",
+        value_name = "STRING"
+    )]
+    pub associated_data: Option<String>
+}
+
 fn arg_group(name: &'static str) -> ArgGroup<'static> {
     ArgGroup::with_name(name).required(true)
 }
