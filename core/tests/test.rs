@@ -15,13 +15,15 @@ use ene_core::define::Serde;
 
 pub struct Cbor;
 
-impl Serde<CborError> for Cbor {
-    fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<CborError>> {
+impl Serde for Cbor {
+    type Error = CborError;
+
+    fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<Self::Error>> {
         cbor::to_vec(value)
             .map_err(|err| error::Error::Format(err.into()))
     }
 
-    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<CborError>> {
+    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<Self::Error>> {
         cbor::from_slice(slice)
             .map_err(|err| error::Error::Format(err.into()))
     }
@@ -48,12 +50,12 @@ fn test_ene() {
     let proto = Protocol::Ooake(alg::KeyExchange::RistrettoDH, alg::Encrypt::Aes128Colm0);
 
     let enemsg = alice_sk.and(bob, &bob_pk)
-        .sendto::<Cbor, _>(&proto, title.as_bytes(), msg.as_bytes()).unwrap();
+        .sendto::<Cbor>(&proto, title.as_bytes(), msg.as_bytes()).unwrap();
 
     let Envelope(_, v, (_, proto, enemsg)) = enemsg;
     assert_eq!(v, Version::default());
     let msg2 = bob_sk.and(alice, &alice_pk)
-        .recvfrom::<Cbor, _>(&proto, title.as_bytes(), &enemsg).unwrap();
+        .recvfrom::<Cbor>(&proto, title.as_bytes(), &enemsg).unwrap();
 
     assert_eq!(msg2, msg.as_bytes());
 }

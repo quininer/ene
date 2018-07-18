@@ -45,10 +45,12 @@ pub trait AeadCipher {
     fn open(&self, key: &[u8], nonce: &[u8], aad: &[u8], input: &[u8], output: &mut [u8]) -> Result<(), ProtoError>;
 }
 
-pub trait Serde<E> {
-    fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<E>>;
+pub trait Serde {
+    type Error;
 
-    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<E>>;
+    fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<Self::Error>>;
+
+    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<Self::Error>>;
 }
 
 pub trait Type {

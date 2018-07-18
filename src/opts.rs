@@ -92,28 +92,34 @@ pub struct Contact {
 #[derive(Debug, StructOpt)]
 pub struct SendTo {
     #[structopt(name = "id", value_name = "ID")]
-    target: String,
+    pub target: String,
 
     #[structopt(
         short = "i", long = "input",
         value_name = "PATH",
         parse(from_os_str)
     )]
-    input: PathBuf,
+    pub input: PathBuf,
 
     #[structopt(
         short = "o", long = "output",
         value_name = "PATH",
         parse(from_os_str)
     )]
-    output: Option<PathBuf>,
+    pub output: Option<PathBuf>,
 
     #[structopt(
         short = "p", long = "protocol",
         value_name = "PROTOCOL",
         default_value = "ooake-ristrettodh-aes128colm0"
     )]
-    protocol: Protocol
+    pub protocol: Protocol,
+
+    #[structopt(
+        long = "associated-data",
+        value_name = "STRING"
+    )]
+    pub associated_data: Option<String>
 }
 
 fn arg_group(name: &'static str) -> ArgGroup<'static> {

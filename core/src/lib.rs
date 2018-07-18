@@ -113,7 +113,7 @@ impl Ene {
 }
 
 impl<'a> And<'a> {
-    pub fn sendto<SER: Serde<E>, E>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Message, error::Error<E>> {
+    pub fn sendto<SER: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Message, error::Error<SER::Error>> {
         use crate::format::{ Meta, Short, Envelope };
 
         let And {
@@ -219,7 +219,7 @@ impl<'a> And<'a> {
         }
     }
 
-    pub fn recvfrom<DE: Serde<E>, E>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Vec<u8>, error::Error<E>> {
+    pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Vec<u8>, error::Error<DE::Error>> {
         let And {
             ene: Ene { id: idb, key: skb },
             target: (ida, pka)

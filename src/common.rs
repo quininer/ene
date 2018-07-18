@@ -1,6 +1,11 @@
 use std::env;
 use std::process::{ Command, Termination, ExitCode };
 use failure::Error;
+use serde::{ Serialize, Deserialize };
+use serde_cbor as cbor;
+use serde_cbor::error::Error as CborError;
+use crate::core::error;
+use crate::core::define::Serde;
 
 
 macro_rules! info {
@@ -64,5 +69,22 @@ pub fn askpass<F, T>(prompt: &str, f: F)
             })
     } else {
         ttyaskpass::askpass(prompt, f)
+    }
+}
+
+
+pub struct Cbor;
+
+impl Serde for Cbor {
+    type Error = CborError;
+
+    fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<Self::Error>> {
+        cbor::to_vec(value)
+            .map_err(|err| error::Error::Format(err.into()))
+    }
+
+    fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<Self::Error>> {
+        cbor::from_slice(slice)
+            .map_err(|err| error::Error::Format(err.into()))
     }
 }
