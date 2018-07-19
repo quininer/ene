@@ -8,7 +8,6 @@ extern crate serde;
 extern crate serde_bytes;
 extern crate serde_cbor;
 extern crate directories;
-extern crate fs2;
 extern crate sled;
 extern crate ttyaskpass;
 extern crate ene_core as core;
@@ -19,7 +18,7 @@ mod profile;
 mod contact;
 
 use std::fs;
-use failure::Error;
+use failure::{ Error, err_msg };
 use structopt::StructOpt;
 use directories::ProjectDirs;
 use crate::common::Exit;
@@ -28,7 +27,8 @@ use crate::opts::Options;
 
 #[inline]
 fn start() -> Result<(), Error> {
-    let dir = ProjectDirs::from("", "", "ENE").unwrap();
+    let dir = ProjectDirs::from("", "", "ENE")
+        .ok_or_else(|| err_msg("not found project dir"))?;
 
     if !dir.data_local_dir().is_dir() {
         fs::create_dir_all(dir.data_local_dir())?;
@@ -38,7 +38,7 @@ fn start() -> Result<(), Error> {
         Options::Profile(profile) => profile.exec(&dir)?,
         Options::Contact(contact) => contact.exec(&dir)?,
         Options::SendTo(sendto) => sendto.exec(&dir)?,
-        Options::RecvFrom => unimplemented!()
+        Options::RecvFrom(recvfrom) => recvfrom.exec(&dir)?
     }
 
     Ok(())

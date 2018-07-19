@@ -23,9 +23,11 @@ failure = "*"
 structopt = "0.2"
 # human-panic = "*"
 directories = "*"
-toml = "*"
 termcolor = "*"
 ttyaskpass = { path = "../ttyaskpass" }
 
-fs2 = "*"
 sled = "*"
+
+[dev-dependencies]
+assert_fs = "*"
+assert_cmd = "*"

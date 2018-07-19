@@ -5,7 +5,8 @@ use serde::{ Serialize, Deserialize };
 use serde_cbor as cbor;
 use serde_cbor::error::Error as CborError;
 use crate::core::error;
-use crate::core::define::Serde;
+use crate::core::format::Envelope;
+use crate::core::define::{ Type, Serde };
 
 
 macro_rules! info {
@@ -32,6 +33,13 @@ macro_rules! check {
             return Err(err_msg(format!("File already exists: {}", $path.display())));
         }
     };
+}
+
+macro_rules! unwrap {
+    ( $msg:expr ) => {{
+        let crate::core::format::Envelope(_, _, value) = $msg;
+        value
+    }}
 }
 
 pub struct Exit<E>(pub Result<(), E>);

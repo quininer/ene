@@ -6,21 +6,32 @@ use crate::core::alg::{ self, Protocol };
 #[derive(Debug, StructOpt)]
 #[structopt(name = "ene")]
 pub enum Options {
-    #[structopt(name = "profile", about = "Profile")]
+    #[structopt(
+        name = "profile", about = "Profile",
+        raw(group = "arg_group(\"profile\")")
+    )]
     Profile(Profile),
 
-    #[structopt(name = "sendto", about = "SendTo")]
+    #[structopt(
+        name = "sendto", about = "SendTo",
+        raw(group = "arg_group(\"target\")")
+    )]
     SendTo(SendTo),
 
-    #[structopt(name = "recvfrom", about = "RecvFrom")]
-    RecvFrom,
+    #[structopt(
+        name = "recvfrom", about = "RecvFrom",
+        raw(group = "arg_group(\"target\")")
+    )]
+    RecvFrom(RecvFrom),
 
-    #[structopt(name = "contact", about = "Contact")]
+    #[structopt(
+        name = "contact", about = "Contact",
+        raw(group = "arg_group(\"contact\")")
+    )]
     Contact(Contact)
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(group = "arg_group(\"profile\")"))]
 pub struct Profile {
     #[structopt(
         long = "init",
@@ -67,7 +78,6 @@ pub struct Profile {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(group = "arg_group(\"contact\")"))]
 pub struct Contact {
     #[structopt(long = "list", group = "contact")]
     pub list: bool,
@@ -91,8 +101,8 @@ pub struct Contact {
 
 #[derive(Debug, StructOpt)]
 pub struct SendTo {
-    #[structopt(name = "id", value_name = "ID")]
-    pub target: String,
+    #[structopt(name = "id", value_name = "ID", group = "target")]
+    pub target: Option<String>,
 
     #[structopt(
         short = "i", long = "input",
@@ -115,15 +125,25 @@ pub struct SendTo {
     )]
     pub protocol: Protocol,
 
+    #[structopt(long = "associated-data", value_name = "STRING")]
+    pub associated_data: Option<String>,
+
+    #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
+    pub profile: Option<PathBuf>,
+
     #[structopt(
-        long = "associated-data",
-        value_name = "STRING"
+        long = "target-public",
+        value_name = "PATH", group = "target",
+        parse(from_os_str)
     )]
-    pub associated_data: Option<String>
+    pub target_public: Option<PathBuf>
 }
 
 #[derive(Debug, StructOpt)]
 pub struct RecvFrom {
+    #[structopt(name = "id", value_name = "ID", group = "target")]
+    pub target: String,
+
     #[structopt(
         short = "i", long = "input",
         value_name = "PATH",
@@ -138,11 +158,21 @@ pub struct RecvFrom {
     )]
     pub output: Option<PathBuf>,
 
+    #[structopt(long = "associated-data", value_name = "STRING")]
+    pub associated_data: Option<String>,
+
+    #[structopt(short = "f", long = "force")]
+    pub force: bool,
+
+    #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
+    pub profile: Option<PathBuf>,
+
     #[structopt(
-        long = "associated-data",
-        value_name = "STRING"
+        long = "target-public",
+        value_name = "PATH", group = "target",
+        parse(from_os_str)
     )]
-    pub associated_data: Option<String>
+    pub target_public: Option<PathBuf>,
 }
 
 fn arg_group(name: &'static str) -> ArgGroup<'static> {

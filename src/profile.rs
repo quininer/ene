@@ -124,7 +124,7 @@ pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::
 }
 
 pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<Ene, Error> {
-    let Envelope(_, _, (id, enc, salt, c)) = sk_packed;
+    let (id, enc, salt, c) = unwrap!(sk_packed);
 
     let aead = match enc {
         alg::Encrypt::Aes128Colm0 => &aes128colm0::Aes128Colm0 as &'static AeadCipher,
