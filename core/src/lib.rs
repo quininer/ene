@@ -128,7 +128,7 @@ impl<'a> And<'a> {
                 let sig_sk = try_unwrap!(&ska.ed25519; Ed25519::NAME);
                 let sig_pk = ed25519::PublicKey::from_secret(sig_sk);
 
-                let msg = sonly::send::<Ed25519>(sig_sk, &aad);
+                let msg = sonly::send::<Ed25519>((ida, sig_sk), aad, message);
                 let msg = ByteBuf::from(SER::to_vec(&msg)?);
 
                 let smap = key::PublicKey {
@@ -230,7 +230,7 @@ impl<'a> And<'a> {
                 let msg: sonly::Message<Ed25519> = DE::from_slice(message)?;
 
                 let sig_pk = try_unwrap!(&pka.ed25519; Ed25519::NAME);
-                sonly::recv::<Ed25519>(sig_pk, &msg, aad)?;
+                sonly::recv::<Ed25519>((ida, sig_pk), &msg, aad, message)?;
 
                 Ok(Vec::new())
             },

@@ -9,9 +9,7 @@ use crate::alg::{ self, Protocol };
 
 
 pub type PrivateKey = Envelope<SK, (String, alg::Encrypt, ByteBuf, ByteBuf)>;
-
 pub type PublicKey = Envelope<PK, (String, key::PublicKey)>;
-
 pub type Message = Envelope<MSG, (Meta, Protocol, ByteBuf)>;
 
 pub struct ENE<T: Type>(PhantomData<T>);
@@ -56,14 +54,6 @@ pub struct Short(pub u64);
 impl<T: Type, V> From<V> for Envelope<T, V> {
     fn from(value: V) -> Envelope<T, V> {
         Envelope(ENE(PhantomData), Version::default(), value)
-    }
-}
-
-impl<T: Type, V> Envelope<T, V> {
-    pub fn unwrap(self) -> V {
-        let Envelope(_, version, value) = self;
-        assert_eq!(version, Version::default());
-        value
     }
 }
 

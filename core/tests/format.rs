@@ -23,7 +23,7 @@ fn test_envelope() -> Result<(), Error> {
 
 #[should_panic]
 #[test]
-fn test_badenvelope() {
+fn test_bad_envelope() {
     let message = "message";
     let m: Envelope<PK, String> = Envelope::from(message.to_owned());
     let data = cbor::to_vec(&m).unwrap();
