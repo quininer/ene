@@ -5,8 +5,7 @@ use serde::{ Serialize, Deserialize };
 use serde_cbor as cbor;
 use serde_cbor::error::Error as CborError;
 use crate::core::error;
-use crate::core::format::Envelope;
-use crate::core::define::{ Type, Serde };
+use crate::core::define::Serde;
 
 
 macro_rules! info {

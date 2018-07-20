@@ -55,9 +55,9 @@ pub fn send<
     hasher.input(idb);
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
-    if !flag {
+    if flag {
         hasher.input(Sha3_512::digest(aad).as_slice());
-        hasher.input(plaintext);
+        hasher.input(Sha3_512::digest(plaintext).as_slice());
     }
     let sig = SIG::sign(sk, hasher.result().as_slice());
 
@@ -122,9 +122,9 @@ pub fn recv<
     hasher.input(idb);
     pk.read_bytes(|bytes| hasher.input(bytes));
     m.read_bytes(|bytes| hasher.input(bytes));
-    if !flag {
+    if flag {
         hasher.input(Sha3_512::digest(aad).as_slice());
-        hasher.input(&plaintext);
+        hasher.input(Sha3_512::digest(&plaintext).as_slice());
     }
     if SIG::verify(pka, &sig, hasher.result().as_slice()) {
         Ok(plaintext)

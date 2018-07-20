@@ -1,6 +1,6 @@
-use std::io::{ self, Write };
-use std::fs::{ self, File };
 use std::path::Path;
+use std::fs::{ self, File };
+use std::io::{ self, Write };
 use rand::{ Rng, OsRng };
 use failure::{ Error, err_msg };
 use argon2rs::{ Argon2, Variant };
@@ -22,16 +22,22 @@ impl Profile {
 
         if self.init {
             check!(is_file sk_path);
-            self.init(&sk_path)?;
+
+            init(
+                &self.id.unwrap(),
+                self.algorithm.as_ref().map(String::as_str),
+                self.encrypt.unwrap_or(alg::Encrypt::Aes128Colm0),
+                &sk_path
+            )?;
         } else if let Some(path) = self.import {
             check!(is_file sk_path);
             fs::copy(path, sk_path)?;
-        } else if let Some(mut path) = self.export_public {
+        } else if let Some(mut path) = self.export_pubkey {
             let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
             let sk = askpass("Password:", |pass|
                 open(pass.as_bytes(), &sk_packed)
             )?;
-            let id = &(sk_packed.2).0;
+            let (id, ..) = unwrap!(&sk_packed);
 
             if path.is_dir() {
                 path = path.join(format!("{}.ene", id));
@@ -40,9 +46,9 @@ impl Profile {
             let pk = sk.as_secret().to_public();
             let pk_packed: PublicKey = Envelope::from((id.to_owned(), pk));
             cbor::to_writer(&mut File::create(&path)?, &pk_packed)?;
-        } else if let Some(mut path) = self.export_secret {
+        } else if let Some(mut path) = self.export_privkey {
             let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
-            let id = &(sk_packed.2).0;
+            let (id, ..) = unwrap!(&sk_packed);
 
             if path.is_dir() {
                 path = path.join(format!("{}.ene", id));
@@ -58,44 +64,39 @@ impl Profile {
 
         Ok(())
     }
+}
 
-    fn init(&self, output: &Path) -> Result<(), Error> {
-        let id = self.id.as_ref().unwrap();
-        let enc = self.encrypt.unwrap_or(alg::Encrypt::Aes128Colm0);
+pub fn init(id: &str, algorithm: Option<&str>, enc: alg::Encrypt, output: &Path) -> Result<(), Error> {
+    let builder = if let Some(algorithm) = algorithm {
+        let mut builder = Builder::empty();
 
-        let builder = if let Some(ref algorithm) = self.algorithm {
-            let mut builder = Builder::empty();
-
-            for a in algorithm.split(',') {
-                match a.trim().to_lowercase().as_str() {
-                    "ed25519" => builder.ed25519 = true,
-                    "ristrettodh" => builder.ristrettodh = true,
-                    a => {
-                        warn!("{} algorithm does not support", a);
-                    }
+        for a in algorithm.split(',') {
+            match a.trim().to_lowercase().as_str() {
+                "ed25519" => builder.ed25519 = true,
+                "ristrettodh" => builder.ristrettodh = true,
+                a => {
+                    warn!("{} algorithm does not support", a);
                 }
             }
+        }
 
-            builder
-        } else {
-            Builder::default()
-        };
+        builder
+    } else {
+        Builder::default()
+    };
 
-        let mut rng = OsRng::new()?;
-        let ene = builder.generate(id, &mut rng);
+    let mut rng = OsRng::new()?;
+    let ene = builder.generate(id, &mut rng);
 
-        info!("generate private key to {}", output.display());
+    let mut sk_file = File::create(output)?;
+    let sk_packed = askpass("Password:", |pass|
+        seal(&mut rng, enc, id, pass.as_bytes(), ene.as_secret())
+    )?;
 
-        let mut sk_file = File::create(output)?;
-        let sk_packed = askpass("Password:", |pass|
-            seal(&mut rng, enc, id, pass.as_bytes(), ene.as_secret())
-        )?;
+    cbor::to_writer(&mut sk_file, &sk_packed)?;
+    sk_file.sync_all()?;
 
-        cbor::to_writer(&mut sk_file, &sk_packed)?;
-        sk_file.sync_all()?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::SecretKey) -> Result<PrivateKey, Error> {

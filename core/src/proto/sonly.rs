@@ -12,9 +12,8 @@ pub fn send<SIG: Signature>(
 ) -> SIG::Signature {
     let mut hasher = Sha3_512::default();
     hasher.input(id.as_bytes());
-    hasher.input(&[0xff]);
     hasher.input(Sha3_512::digest(aad).as_slice());
-    hasher.input(message);
+    hasher.input(Sha3_512::digest(message).as_slice());
     SIG::sign(sk, hasher.result().as_slice())
 }
 
@@ -26,9 +25,8 @@ pub fn recv<SIG: Signature>(
 ) -> Result<(), ProtoError> {
     let mut hasher = Sha3_512::default();
     hasher.input(id.as_bytes());
-    hasher.input(&[0xff]);
     hasher.input(Sha3_512::digest(aad).as_slice());
-    hasher.input(message);
+    hasher.input(Sha3_512::digest(message).as_slice());
     if SIG::verify(pk, sig, hasher.result().as_slice()) {
         Ok(())
     } else {

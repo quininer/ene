@@ -7,28 +7,28 @@ use crate::core::alg::{ self, Protocol };
 #[structopt(name = "ene")]
 pub enum Options {
     #[structopt(
-        name = "profile", about = "Profile",
+        name = "profile", about = "Profile", display_order = 1,
         raw(group = "arg_group(\"profile\")")
     )]
     Profile(Profile),
 
     #[structopt(
-        name = "sendto", about = "SendTo",
-        raw(group = "arg_group(\"target\")")
+        name = "contact", about = "Contact", display_order = 2,
+        raw(group = "arg_group(\"contact\")")
+    )]
+    Contact(Contact),
+
+    #[structopt(
+        name = "sendto", about = "SendTo", display_order = 3,
+        raw(group = "arg_group(\"recipient\")")
     )]
     SendTo(SendTo),
 
     #[structopt(
-        name = "recvfrom", about = "RecvFrom",
-        raw(group = "arg_group(\"target\")")
+        name = "recvfrom", about = "RecvFrom", display_order = 4,
+        raw(group = "arg_group(\"sender\")")
     )]
-    RecvFrom(RecvFrom),
-
-    #[structopt(
-        name = "contact", about = "Contact",
-        raw(group = "arg_group(\"contact\")")
-    )]
-    Contact(Contact)
+    RecvFrom(RecvFrom)
 }
 
 #[derive(Debug, StructOpt)]
@@ -40,16 +40,13 @@ pub struct Profile {
     )]
     pub init: bool,
 
-    /// e.g. alice@core.ene
-    #[structopt(long = "id", value_name = "ID", display_order = 1)]
+    #[structopt(name = "id", value_name = "ID")]
     pub id: Option<String>,
 
-    /// e.g. ed25519,ristrettodh
     #[structopt(short = "a", long = "algorithm", value_name = "STRING")]
     pub algorithm: Option<String>,
 
-    /// e.g. aes128colm0
-    #[structopt(short = "x", long = "encrypt-algorithm", value_name = "STRING")]
+    #[structopt(short = "X", long = "encrypt-cipher", value_name = "STRING")]
     pub encrypt: Option<alg::Encrypt>,
 
     #[structopt(
@@ -61,20 +58,20 @@ pub struct Profile {
     pub import: Option<PathBuf>,
 
     #[structopt(
-        short = "e", long = "export-public", alias = "export",
+        short = "e", long = "export-pubkey", alias = "export",
         value_name = "PATH",
         group = "profile",
         parse(from_os_str)
     )]
-    pub export_public: Option<PathBuf>,
+    pub export_pubkey: Option<PathBuf>,
 
     #[structopt(
-        long = "export-secret",
+        short = "E", long = "export-privkey",
         value_name = "PATH",
         group = "profile",
         parse(from_os_str)
     )]
-    pub export_secret: Option<PathBuf>,
+    pub export_privkey: Option<PathBuf>,
 }
 
 #[derive(Debug, StructOpt)]
@@ -101,8 +98,8 @@ pub struct Contact {
 
 #[derive(Debug, StructOpt)]
 pub struct SendTo {
-    #[structopt(name = "id", value_name = "ID", group = "target")]
-    pub target: Option<String>,
+    #[structopt(name = "id", value_name = "ID", group = "recipient")]
+    pub recipient: Option<String>,
 
     #[structopt(
         short = "i", long = "input",
@@ -125,24 +122,24 @@ pub struct SendTo {
     )]
     pub protocol: Protocol,
 
-    #[structopt(long = "associated-data", value_name = "STRING")]
+    #[structopt(short = "A", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
     #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
     pub profile: Option<PathBuf>,
 
     #[structopt(
-        long = "target-public",
-        value_name = "PATH", group = "target",
+        long = "recipient-file",
+        value_name = "PATH", group = "recipient",
         parse(from_os_str)
     )]
-    pub target_public: Option<PathBuf>
+    pub recipient_file: Option<PathBuf>
 }
 
 #[derive(Debug, StructOpt)]
 pub struct RecvFrom {
-    #[structopt(name = "id", value_name = "ID", group = "target")]
-    pub target: String,
+    #[structopt(name = "id", value_name = "ID", group = "sender")]
+    pub sender: Option<String>,
 
     #[structopt(
         short = "i", long = "input",
@@ -158,21 +155,14 @@ pub struct RecvFrom {
     )]
     pub output: Option<PathBuf>,
 
-    #[structopt(long = "associated-data", value_name = "STRING")]
+    #[structopt(short = "A", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
-    #[structopt(short = "f", long = "force")]
+    #[structopt(short = "f", long = "force", group = "sender")]
     pub force: bool,
 
     #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
-    pub profile: Option<PathBuf>,
-
-    #[structopt(
-        long = "target-public",
-        value_name = "PATH", group = "target",
-        parse(from_os_str)
-    )]
-    pub target_public: Option<PathBuf>,
+    pub profile: Option<PathBuf>
 }
 
 fn arg_group(name: &'static str) -> ArgGroup<'static> {

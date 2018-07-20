@@ -1,13 +1,9 @@
-use std::borrow::{ Cow, Borrow };
-use std::path::{ Path, PathBuf };
 use std::fs::{ self, File };
 use failure::{ Error, err_msg };
 use serde_cbor as cbor;
 use directories::ProjectDirs;
-use crate::core::key;
 use crate::core::format::{ PrivateKey, PublicKey };
-use crate::opts::SendTo;
-use crate::profile;
+use crate::{ profile, opts::SendTo };
 use crate::common::{ Cbor, askpass };
 use super::db::Db;
 
@@ -15,10 +11,10 @@ use super::db::Db;
 impl SendTo {
     pub fn exec(self, dir: &ProjectDirs) -> Result<(), Error> {
         // take receiver
-        let (receiver_id, receiver_pk) = if let Some(ref target_path) = self.target_public {
-            let pk_packed: PublicKey = cbor::from_reader(&mut File::open(target_path)?)?;
+        let (receiver_id, receiver_pk) = if let Some(ref pk_path) = self.recipient_file {
+            let pk_packed: PublicKey = cbor::from_reader(&mut File::open(pk_path)?)?;
             unwrap!(pk_packed)
-        } else if let Some(id) = self.target {
+        } else if let Some(id) = self.recipient {
             let db_path = dir.data_local_dir().join("sled");
             let db = Db::new(&db_path)?;
             let pk = db.get(&id)?
@@ -29,7 +25,7 @@ impl SendTo {
         };
 
         // take sender
-        let sk_packed = if let Some(ref sk_path) = self.profile {
+        let sk_packed: PrivateKey = if let Some(ref sk_path) = self.profile {
             cbor::from_reader(&mut File::open(sk_path)?)?
         } else {
             let sk_path = dir.data_local_dir().join("ene.key");
