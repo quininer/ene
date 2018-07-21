@@ -46,29 +46,26 @@ pub struct Profile {
     #[structopt(short = "a", long = "algorithm", value_name = "STRING")]
     pub algorithm: Option<String>,
 
-    #[structopt(short = "X", long = "encrypt-cipher", value_name = "STRING")]
+    #[structopt(short = "X", long = "encrypt-cipher", value_name = "CIPHER")]
     pub encrypt: Option<alg::Encrypt>,
 
     #[structopt(
         short = "i", long = "import",
-        value_name = "PATH",
-        group = "profile",
+        value_name = "PATH", group = "profile",
         parse(from_os_str)
     )]
     pub import: Option<PathBuf>,
 
     #[structopt(
         short = "e", long = "export-pubkey", alias = "export",
-        value_name = "PATH",
-        group = "profile",
+        value_name = "PATH", group = "profile",
         parse(from_os_str)
     )]
     pub export_pubkey: Option<PathBuf>,
 
     #[structopt(
         short = "E", long = "export-privkey",
-        value_name = "PATH",
-        group = "profile",
+        value_name = "PATH", group = "profile",
         parse(from_os_str)
     )]
     pub export_privkey: Option<PathBuf>,

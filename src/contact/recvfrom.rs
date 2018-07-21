@@ -26,12 +26,15 @@ impl RecvFrom {
                 let pk = db.get(&sender_id)?
                     .ok_or_else(|| err_msg("not found"))?;
 
-                // TODO check
+                check!(pk("sender pk different: {:?}, {:?}"):
+                    pk.ed25519, sender_pk.ed25519;
+                    pk.ristrettodh, sender_pk.ristrettodh;
+                );
 
                 pk
             },
-            (_, None) => unreachable!(),
-            _ => return Err(err_msg("id different"))
+            (_, Some(ref sender)) => return Err(err_msg(format!("sender id different: {} {}", sender, sender_id))),
+            (_, None) => unreachable!()
         };
 
         // take receiver
@@ -48,7 +51,18 @@ impl RecvFrom {
         )?;
 
         if let Some((receiver_id, receiver_pk)) = r {
-            // TODO check
+            let (id, ..) = unwrap!(&sk_packed);
+
+            if id != &receiver_id {
+                warn!("recipient id different: {} {}", id, receiver_id);
+            }
+
+            let short_pk = sk.as_secret().to_public().to_short();
+
+            check!(pk("recipient pk different: {:?}, {:?}"):
+                short_pk.ed25519, receiver_pk.ed25519;
+                short_pk.ristrettodh, receiver_pk.ristrettodh;
+            );
         }
 
         // decrypt message

@@ -14,7 +14,7 @@ use crate::error::ProtoError;
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) Scalar, pub(crate) RistrettoPoint);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[derive(Serialize)]
 pub struct PublicKey(pub(crate) RistrettoPoint);
 

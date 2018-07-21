@@ -8,12 +8,14 @@ use ed25519_dalek::{
     PublicKey as PublicKey2, Signature as Signature2,
 };
 use crate::define::{ Packing, Signature as Signature3 };
+use crate::format::Short;
 use crate::error::ProtoError;
 
 
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) Keypair);
 
+#[derive(Clone, Eq, PartialEq)]
 #[derive(Serialize)]
 pub struct PublicKey(pub(crate) PublicKey2);
 
@@ -122,6 +124,12 @@ impl<'de> Deserialize<'de> for Signature {
         }
 
         deserializer.deserialize_bytes(SignatureVisitor)
+    }
+}
+
+impl fmt::Debug for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Short::from(self).fmt(f)
     }
 }
 
