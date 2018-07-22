@@ -1,3 +1,7 @@
+//! Signature Only protocol
+//!
+//! just signature.
+
 use sha3::{ Digest, Sha3_512 };
 use crate::define::Signature;
 use crate::error::ProtoError;

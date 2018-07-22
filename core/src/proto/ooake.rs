@@ -12,6 +12,11 @@
 //! K = H(K_A) = H(K_B)
 //! ```
 //!
+//! The OAKE protocol family is designed by Andrew Yao,
+//! which is superior to HMQV in many aspects.
+//!
+//! ENE used a one-pass variants of protocol mentioned in the appendix to the OAKE paper.
+//!
 //! * [OAKE: a new family of implicitly authenticated diffie-hellman protocols](http://iiis.tsinghua.edu.cn/show-3800-1.html)
 
 use rand::{ RngCore, CryptoRng };
