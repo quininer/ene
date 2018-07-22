@@ -1,30 +1,15 @@
-use std::env;
+use std::{ env, fmt };
+use std::io::{ self, Write };
 use std::process::{ Command, Termination, ExitCode };
 use failure::Error;
 use serde::{ Serialize, Deserialize };
 use serde_cbor as cbor;
 use serde_cbor::error::Error as CborError;
+use termcolor::{ StandardStream, ColorChoice, ColorSpec, Color, WriteColor };
 use crate::core::error;
 use crate::core::define::Serde;
+use crate::opts::ColorChoice as ColorChoice2;
 
-
-macro_rules! info {
-    ( $e:expr ) => {
-        //
-    };
-    ( $fmt:expr, $( $args:tt )+ ) => {
-        //
-    };
-}
-
-macro_rules! warn {
-    ( $e:expr ) => {
-        eprintln!($e)
-    };
-    ( $fmt:expr, $( $args:tt )+ ) => {
-        eprintln!($fmt, $( $args )*)
-    };
-}
 
 macro_rules! check {
     ( is_file $path:expr ) => {
@@ -32,11 +17,11 @@ macro_rules! check {
             return Err(err_msg(format!("File already exists: {}", $path.display())));
         }
     };
-    ( pk ( $fmt:expr ) : $( $pk:expr, $pack_pk:expr );* ; ) => {
+    ( pk ( $log:expr, $fmt:expr ) : $( $pk:expr, $pack_pk:expr );* ; ) => {
         $(
             if let (Some(pk), Some(pack_pk)) = (&$pk, &$pack_pk) {
                 if pk != pack_pk {
-                    warn!($fmt, pk, pack_pk);
+                    $log.warn(format_args!($fmt, pk, pack_pk))?;
                 }
             }
         )*
@@ -102,5 +87,53 @@ impl Serde for Cbor {
     fn from_slice<'a, T: Deserialize<'a>>(slice: &'a [u8]) -> Result<T, error::Error<Self::Error>> {
         cbor::from_slice(slice)
             .map_err(|err| error::Error::Format(err.into()))
+    }
+}
+
+impl Into<ColorChoice> for ColorChoice2 {
+    fn into(self) -> ColorChoice {
+        match self {
+            ColorChoice2::Always => ColorChoice::Always,
+            ColorChoice2::AlwaysAnsi => ColorChoice::AlwaysAnsi,
+            ColorChoice2::Auto => ColorChoice::Auto,
+            ColorChoice2::Never => ColorChoice::Never
+        }
+    }
+}
+
+pub struct Stdio {
+    pub stdout: StandardStream,
+    pub stderr: StandardStream
+}
+
+impl Stdio {
+    pub fn new(choice: ColorChoice) -> Stdio {
+        Stdio {
+            stdout: StandardStream::stdout(choice),
+            stderr: StandardStream::stderr(choice)
+        }
+    }
+
+    pub fn info(&mut self, args: fmt::Arguments) -> io::Result<()> {
+        self.stdout.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
+        self.stdout.write_fmt(args)?;
+        self.stdout.set_color(ColorSpec::new().set_fg(None))?;
+        Ok(())
+    }
+
+    pub fn warn(&mut self, args: fmt::Arguments) -> io::Result<()> {
+        self.stderr.set_color(ColorSpec::new().set_fg(Some(Color::Red)))?;
+        self.stderr.write_fmt(args)?;
+        self.stderr.set_color(ColorSpec::new().set_fg(None))?;
+        Ok(())
+    }
+
+    pub fn print<E, F>(&mut self, f: F)
+        -> Result<(), E>
+        where
+            F: FnOnce(&mut StandardStream) -> Result<(), E>,
+            E: From<io::Error>
+    {
+        f(&mut self.stdout)
     }
 }

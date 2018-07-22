@@ -5,7 +5,26 @@ use crate::core::alg::{ self, Protocol };
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "ene")]
-pub enum Options {
+pub struct Options {
+    #[structopt(subcommand)]
+    pub subcommand: SubCommand,
+
+    #[structopt(short = "c", long = "color", value_name = "MODE", default_value = "auto")]
+    pub color: ColorChoice
+}
+
+arg_enum! {
+    #[derive(PartialEq, Debug)]
+    pub enum ColorChoice {
+        Always,
+        AlwaysAnsi,
+        Auto,
+        Never
+    }
+}
+
+#[derive(Debug, StructOpt)]
+pub enum SubCommand {
     #[structopt(
         name = "profile", about = "Profile", display_order = 1,
         raw(group = "arg_group(\"profile\")")

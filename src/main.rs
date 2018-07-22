@@ -1,5 +1,6 @@
 #![feature(nll, termination_trait_lib, process_exitcode_placeholder)]
 
+#[macro_use] extern crate clap;
 #[macro_use] extern crate structopt;
 extern crate argon2rs;
 extern crate rand;
@@ -8,6 +9,7 @@ extern crate serde;
 extern crate serde_bytes;
 extern crate serde_cbor;
 extern crate directories;
+extern crate termcolor;
 extern crate sled;
 extern crate ttyaskpass;
 extern crate ene_core as core;
@@ -21,12 +23,15 @@ use std::fs;
 use failure::{ Error, err_msg };
 use structopt::StructOpt;
 use directories::ProjectDirs;
-use crate::common::Exit;
-use crate::opts::Options;
+use crate::common::{ Exit, Stdio };
+use crate::opts::{ Options, SubCommand };
 
 
 #[inline]
 fn start() -> Result<(), Error> {
+    let options = Options::from_args();
+    let mut stdio = Stdio::new(options.color.into());
+
     let dir = ProjectDirs::from("", "", "ENE")
         .ok_or_else(|| err_msg("not found project dir"))?;
 
@@ -34,11 +39,11 @@ fn start() -> Result<(), Error> {
         fs::create_dir_all(dir.data_local_dir())?;
     }
 
-    match Options::from_args() {
-        Options::Profile(profile) => profile.exec(&dir)?,
-        Options::Contact(contact) => contact.exec(&dir)?,
-        Options::SendTo(sendto) => sendto.exec(&dir)?,
-        Options::RecvFrom(recvfrom) => recvfrom.exec(&dir)?
+    match options.subcommand {
+        SubCommand::Profile(profile) => profile.exec(&dir, &mut stdio)?,
+        SubCommand::Contact(contact) => contact.exec(&dir, &mut stdio)?,
+        SubCommand::SendTo(sendto) => sendto.exec(&dir, &mut stdio)?,
+        SubCommand::RecvFrom(recvfrom) => recvfrom.exec(&dir, &mut stdio)?
     }
 
     Ok(())

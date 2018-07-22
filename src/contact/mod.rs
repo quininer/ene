@@ -9,12 +9,13 @@ use structopt::StructOpt;
 use directories::ProjectDirs;
 use serde_cbor as cbor;
 use crate::core::format::{ PublicKey, Envelope };
+use crate::common::Stdio;
 use crate::opts::Contact;
 use self::db::Db;
 
 
 impl Contact {
-    pub fn exec(self, dir: &ProjectDirs) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
         let db_path = dir.data_local_dir().join("sled");
         let db = Db::new(&db_path)?;
 
@@ -25,7 +26,7 @@ impl Contact {
                 let (id, pk) = match item {
                     Ok(item) => item,
                     Err(err) => {
-                        warn!("{:?}", err);
+                        stdio.warn(format_args!("{:?}", err))?;
                         continue
                     }
                 };
@@ -51,9 +52,7 @@ impl Contact {
 
             db.del(&id)?;
         } else {
-            let mut stdout = io::stdout();
-            Contact::clap().write_help(&mut stdout)?;
-            writeln!(&mut stdout)?;
+            unreachable!()
         }
 
         Ok(())

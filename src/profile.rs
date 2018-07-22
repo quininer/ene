@@ -7,23 +7,25 @@ use argon2rs::{ Argon2, Variant };
 use serde_bytes::ByteBuf;
 use serde_cbor as cbor;
 use structopt::StructOpt;
+use termcolor::StandardStream;
 use directories::ProjectDirs;
 use crate::core::{ alg, key, Builder, Ene };
 use crate::core::format::{ PrivateKey, PublicKey, Envelope };
 use crate::core::aead::aes128colm0;
 use crate::core::define::AeadCipher;
 use crate::opts::Profile;
-use crate::common::askpass;
+use crate::common::{ Stdio, askpass };
 
 
 impl Profile {
-    pub fn exec(self, dir: &ProjectDirs) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
         let sk_path = dir.data_local_dir().join("ene.key");
 
         if self.init {
             check!(is_file sk_path);
 
             init(
+                stdio,
                 &self.id.unwrap(),
                 self.algorithm.as_ref().map(String::as_str),
                 self.encrypt.unwrap_or(alg::Encrypt::Aes128Colm0),
@@ -57,16 +59,19 @@ impl Profile {
             check!(is_file path);
             fs::copy(sk_path, path)?;
         } else {
-            let mut stdout = io::stdout();
-            Profile::clap().write_help(&mut stdout)?;
-            writeln!(&mut stdout)?;
+            unreachable!()
         }
 
         Ok(())
     }
 }
 
-pub fn init(id: &str, algorithm: Option<&str>, enc: alg::Encrypt, output: &Path) -> Result<(), Error> {
+pub fn init(
+    stdio: &mut Stdio,
+    id: &str,
+    algorithm: Option<&str>, enc: alg::Encrypt,
+    output: &Path
+) -> Result<(), Error> {
     let builder = if let Some(algorithm) = algorithm {
         let mut builder = Builder::empty();
 
@@ -75,7 +80,7 @@ pub fn init(id: &str, algorithm: Option<&str>, enc: alg::Encrypt, output: &Path)
                 "ed25519" => builder.ed25519 = true,
                 "ristrettodh" => builder.ristrettodh = true,
                 a => {
-                    warn!("{} algorithm does not support", a);
+                    stdio.warn(format_args!("{} algorithm does not support", a))?;
                 }
             }
         }

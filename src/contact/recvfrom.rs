@@ -5,12 +5,12 @@ use serde_cbor as cbor;
 use directories::ProjectDirs;
 use crate::core::format::{ PrivateKey, Message, Meta };
 use crate::{ profile, opts::RecvFrom };
-use crate::common::{ Cbor, askpass };
+use crate::common::{ Cbor, Stdio, askpass };
 use super::db::Db;
 
 
 impl RecvFrom {
-    pub fn exec(self, dir: &ProjectDirs) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
         // take encrypted message
         let aad = self.associated_data.unwrap_or_default();
         let message_packed: Message = cbor::from_reader(&mut File::open(&self.input)?)?;
@@ -26,7 +26,7 @@ impl RecvFrom {
                 let pk = db.get(&sender_id)?
                     .ok_or_else(|| err_msg("not found"))?;
 
-                check!(pk("sender pk different: {:?}, {:?}"):
+                check!(pk(stdio, "sender pk different: {:?}, {:?}"):
                     pk.ed25519, sender_pk.ed25519;
                     pk.ristrettodh, sender_pk.ristrettodh;
                 );
@@ -54,12 +54,12 @@ impl RecvFrom {
             let (id, ..) = unwrap!(&sk_packed);
 
             if id != &receiver_id {
-                warn!("recipient id different: {} {}", id, receiver_id);
+                stdio.warn(format_args!("recipient id different: {} {}", id, receiver_id))?;
             }
 
             let short_pk = sk.as_secret().to_public().to_short();
 
-            check!(pk("recipient pk different: {:?}, {:?}"):
+            check!(pk(stdio, "recipient pk different: {:?}, {:?}"):
                 short_pk.ed25519, receiver_pk.ed25519;
                 short_pk.ristrettodh, receiver_pk.ristrettodh;
             );
@@ -73,9 +73,7 @@ impl RecvFrom {
         if let Some(path) = self.output {
             fs::write(path, &message)?
         } else {
-            io::stdout()
-                .lock()
-                .write_all(&message)?;
+            stdio.print(|stdout| stdout.lock().write_all(&message))?;
         }
 
         Ok(())

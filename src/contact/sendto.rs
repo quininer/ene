@@ -4,12 +4,12 @@ use serde_cbor as cbor;
 use directories::ProjectDirs;
 use crate::core::format::{ PrivateKey, PublicKey };
 use crate::{ profile, opts::SendTo };
-use crate::common::{ Cbor, askpass };
+use crate::common::{ Cbor, Stdio, askpass };
 use super::db::Db;
 
 
 impl SendTo {
-    pub fn exec(self, dir: &ProjectDirs) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
         // take receiver
         let (receiver_id, receiver_pk) = if let Some(ref pk_path) = self.recipient_file {
             let pk_packed: PublicKey = cbor::from_reader(&mut File::open(pk_path)?)?;
