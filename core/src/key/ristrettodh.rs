@@ -1,6 +1,5 @@
 use std::fmt;
 use rand::{ Rng, CryptoRng };
-use sha3::{ Digest, Sha3_512 };
 use serde::{ Deserialize, Deserializer };
 use serde::de::{ self, Visitor };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
@@ -130,7 +129,7 @@ impl KeyExchange for RistrettoDH {
     type Message = Message;
 
     const NAME: &'static str = "RistrettoDH";
-    const SHARED_LENGTH: usize = 64;
+    const SHARED_LENGTH: usize = 32;
 
     fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], pk: &Self::PublicKey) -> Result<Self::Message, ProtoError> {
         let PublicKey(pk) = pk;
@@ -138,8 +137,7 @@ impl KeyExchange for RistrettoDH {
         let m = &ek * &RISTRETTO_BASEPOINT_TABLE;
 
         let k = (ek * pk).compress();
-        let k = Sha3_512::digest(k.as_bytes());
-        sharedkey.copy_from_slice(k.as_slice());
+        sharedkey.copy_from_slice(k.as_bytes());
 
         Ok(Message(m))
     }
@@ -148,8 +146,7 @@ impl KeyExchange for RistrettoDH {
         let SecretKey(sk, _) = sk;
 
         let k = (sk * m).compress();
-        let k = Sha3_512::digest(k.as_bytes());
-        sharedkey.copy_from_slice(k.as_slice());
+        sharedkey.copy_from_slice(k.as_bytes());
 
         Ok(())
     }

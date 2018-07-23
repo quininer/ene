@@ -17,7 +17,7 @@ extern crate serde_bytes;
 extern crate semver;
 extern crate siphasher;
 
-#[macro_use] pub mod common;
+#[macro_use] mod common;
 pub mod define;
 pub mod proto;
 pub mod alg;
