@@ -4,7 +4,7 @@ cargo-features = ["edition"]
 name = "ene"
 version = "0.1.0"
 authors = ["quininer <quininer@live.com>"]
-description = "A experimental email encryption tool"
+description = "An experimental email encryption tool"
 edition = "2018"
 
 [workspace]
@@ -13,22 +13,22 @@ members = [ "core" ]
 [dependencies]
 ene-core = { path = "./core" }
 
-argon2rs = "*"
-rand = "*"
-serde = "*"
-serde_bytes = "*"
-serde_cbor = "*"
+argon2rs = "0.2"
+rand = "0.5"
+serde = "1"
+serde_bytes = "0.10"
+serde_cbor = "0.8"
 
-failure = "*"
-clap = "*"
+failure = "0.1"
+clap = "2"
 structopt = "0.2"
 # human-panic = "*"
-directories = "*"
-termcolor = "*"
+directories = "1"
+termcolor = "1"
 ttyaskpass = { path = "../ttyaskpass" }
 
-sled = "*"
+sled = "0.15"
 
 [dev-dependencies]
-assert_fs = "*"
-assert_cmd = "*"
+assert_fs = "0.3"
+assert_cmd = "0.6"

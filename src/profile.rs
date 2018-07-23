@@ -36,9 +36,7 @@ impl Profile {
             fs::copy(path, sk_path)?;
         } else if let Some(mut path) = self.export_pubkey {
             let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
-            let sk = askpass("Password:", |pass|
-                open(pass.as_bytes(), &sk_packed)
-            )?;
+            let sk = askpass(|pass| open(pass.as_bytes(), &sk_packed))?;
             let (id, ..) = unwrap!(&sk_packed);
 
             if path.is_dir() {
@@ -62,6 +60,7 @@ impl Profile {
             unreachable!()
         }
 
+        stdio.info(format_args!("Done!"))?;
         Ok(())
     }
 }
@@ -92,12 +91,9 @@ pub fn init(
 
     let mut rng = OsRng::new()?;
     let ene = builder.generate(id, &mut rng);
+    let sk_packed = askpass(|pass| seal(&mut rng, enc, id, pass.as_bytes(), ene.as_secret()))?;
 
     let mut sk_file = File::create(output)?;
-    let sk_packed = askpass("Password:", |pass|
-        seal(&mut rng, enc, id, pass.as_bytes(), ene.as_secret())
-    )?;
-
     cbor::to_writer(&mut sk_file, &sk_packed)?;
     sk_file.sync_all()?;
 

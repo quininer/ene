@@ -28,10 +28,7 @@ use crate::opts::{ Options, SubCommand };
 
 
 #[inline]
-fn start() -> Result<(), Error> {
-    let options = Options::from_args();
-    let mut stdio = Stdio::new(options.color.into());
-
+fn start(subcommand: SubCommand, stdio: &mut Stdio) -> Result<(), Error> {
     let dir = ProjectDirs::from("", "", "ENE")
         .ok_or_else(|| err_msg("not found project dir"))?;
 
@@ -39,16 +36,19 @@ fn start() -> Result<(), Error> {
         fs::create_dir_all(dir.data_local_dir())?;
     }
 
-    match options.subcommand {
-        SubCommand::Profile(profile) => profile.exec(&dir, &mut stdio)?,
-        SubCommand::Contact(contact) => contact.exec(&dir, &mut stdio)?,
-        SubCommand::SendTo(sendto) => sendto.exec(&dir, &mut stdio)?,
-        SubCommand::RecvFrom(recvfrom) => recvfrom.exec(&dir, &mut stdio)?
+    match subcommand {
+        SubCommand::Profile(profile) => profile.exec(&dir, stdio)?,
+        SubCommand::Contact(contact) => contact.exec(&dir, stdio)?,
+        SubCommand::SendTo(sendto) => sendto.exec(&dir, stdio)?,
+        SubCommand::RecvFrom(recvfrom) => recvfrom.exec(&dir, stdio)?
     }
 
     Ok(())
 }
 
 fn main() -> Exit<Error> {
-    Exit(start())
+    let options = Options::from_args();
+    let mut stdio = Stdio::new(options.color.into());
+    let result = start(options.subcommand, &mut stdio);
+    Exit(result, stdio)
 }
