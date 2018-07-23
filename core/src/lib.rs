@@ -1,4 +1,4 @@
-#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait)]
+#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait, raw_identifiers)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
@@ -17,7 +17,7 @@ extern crate serde_bytes;
 extern crate semver;
 extern crate siphasher;
 
-#[macro_use] pub mod common;
+#[macro_use] mod common;
 pub mod define;
 pub mod proto;
 pub mod alg;
@@ -42,6 +42,7 @@ pub struct Ene {
     key: key::SecretKey
 }
 
+/// ENE PrivateKey Builder
 pub struct Builder {
     pub ed25519: bool,
     pub ristrettodh: bool

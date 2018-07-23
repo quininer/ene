@@ -1,3 +1,5 @@
+//! Ristretto Diffie-Hellman key exchange
+
 use std::fmt;
 use rand::{ Rng, CryptoRng };
 use sha3::{ Digest, Sha3_512 };

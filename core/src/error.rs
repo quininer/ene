@@ -1,6 +1,9 @@
+//! Error
+
 use crate::alg::ParseError;
 
 
+/// Core Error
 #[derive(Debug, Fail)]
 pub enum Error<E> {
     #[fail(display = "Protocol Error: {}", _0)]
@@ -16,6 +19,7 @@ pub enum Error<E> {
     Format(E)
 }
 
+/// Protocol Error
 #[derive(Debug, Fail)]
 pub enum ProtoError {
     #[fail(display = "Fail to pass verification: {}", _0)]

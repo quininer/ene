@@ -1,3 +1,5 @@
+//! Ed25519
+
 use std::fmt;
 use rand::{ Rng, CryptoRng };
 use serde::{ Deserialize, Deserializer };

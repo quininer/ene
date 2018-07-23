@@ -1,15 +1,19 @@
+//! PublicKey Cryptography implementation
+
 pub mod ed25519;
 pub mod ristrettodh;
 
 use crate::format::Short;
 
 
+/// SecretKey Set
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey {
     pub ed25519: Option<ed25519::SecretKey>,
     pub ristrettodh: Option<ristrettodh::SecretKey>
 }
 
+/// PublicKey Set
 #[derive(Default)]
 #[derive(Serialize, Deserialize)]
 pub struct PublicKey {
@@ -17,6 +21,7 @@ pub struct PublicKey {
     pub ristrettodh: Option<ristrettodh::PublicKey>
 }
 
+/// Short PublicKey Set
 #[derive(Debug, Default)]
 #[derive(Serialize, Deserialize)]
 pub struct ShortPublicKey {

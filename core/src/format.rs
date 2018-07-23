@@ -1,3 +1,5 @@
+//! Format define
+
 use std::fmt;
 use std::marker::PhantomData;
 use serde::{ Serialize, Serializer, Deserialize, Deserializer };
@@ -8,15 +10,39 @@ use crate::define::{ Packing, Type };
 use crate::alg::{ self, Protocol };
 
 
+/// PrivateKey Format
 pub type PrivateKey = Envelope<SK, (String, alg::Encrypt, ByteBuf, ByteBuf)>;
+
+/// PublicKey Format
 pub type PublicKey = Envelope<PK, (String, key::PublicKey)>;
+
+/// Message Format
 pub type Message = Envelope<MSG, (Meta, Protocol, ByteBuf)>;
 
+/// Envelope
+#[derive(Serialize, Deserialize)]
+pub struct Envelope<T: Type, V>(pub ENE<T>, pub Version, pub V);
+
+/// Magic Number
 pub struct ENE<T: Type>(PhantomData<T>);
 
-#[derive(Serialize, Deserialize)] pub struct PK;
-#[derive(Serialize, Deserialize)] pub struct SK;
-#[derive(Serialize, Deserialize)] pub struct MSG;
+/// Major Version
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct Version(pub u16);
+
+/// Packet Type
+#[derive(Serialize, Deserialize)]
+pub struct PK;
+
+/// Packet Type
+#[derive(Serialize, Deserialize)]
+pub struct SK;
+
+/// Packet Type
+#[derive(Serialize, Deserialize)]
+pub struct MSG;
 
 impl Type for PK {
     const NAME: &'static str = "PK";
@@ -30,14 +56,7 @@ impl Type for MSG {
     const NAME: &'static str = "MSG";
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
-#[derive(Clone, Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct Version(pub u16);
-
-#[derive(Serialize, Deserialize)]
-pub struct Envelope<T: Type, V>(pub ENE<T>, pub Version, pub V);
-
+/// Meta information
 #[derive(Serialize, Deserialize)]
 pub struct Meta {
     /// Sender String and PublicKey
@@ -47,6 +66,7 @@ pub struct Meta {
     pub r: Option<(String, key::ShortPublicKey)>
 }
 
+/// Short PublicKey
 #[derive(Clone, Eq, PartialEq)]
 #[derive(Serialize, Deserialize)]
 pub struct Short(pub u64);

@@ -1,3 +1,5 @@
+//! Algorithm
+
 use std::borrow::Cow;
 use std::str::FromStr;
 use std::option::NoneError;
