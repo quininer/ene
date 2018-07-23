@@ -1,4 +1,4 @@
-use std::io::{ self, Write };
+use std::io::Write;
 use std::fs::{ self, File };
 use failure::{ Error, err_msg };
 use serde_cbor as cbor;

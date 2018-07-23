@@ -59,6 +59,14 @@ pub struct Profile {
     )]
     pub init: bool,
 
+    #[structopt(
+        long = "generate", value_name = "PATH",
+        group = "profile", requires = "id",
+        parse(from_os_str),
+        display_order = 1
+    )]
+    pub generate: Option<PathBuf>,
+
     #[structopt(name = "id", value_name = "ID")]
     pub id: Option<String>,
 
@@ -76,7 +84,14 @@ pub struct Profile {
     pub import: Option<PathBuf>,
 
     #[structopt(
-        short = "e", long = "export-pubkey", alias = "export",
+        short = "f", long = "export-from",
+        value_name = "PATH", requires = "export_pubkey",
+        parse(from_os_str)
+    )]
+    pub export_from: Option<PathBuf>,
+
+    #[structopt(
+        short = "e", long = "export-pubkey",
         value_name = "PATH", group = "profile",
         parse(from_os_str)
     )]

@@ -3,9 +3,7 @@ mod sendto;
 mod recvfrom;
 
 use std::fs::File;
-use std::io::{ self, Write };
 use failure::{ Error, err_msg };
-use structopt::StructOpt;
 use directories::ProjectDirs;
 use serde_cbor as cbor;
 use crate::core::format::{ PublicKey, Envelope };

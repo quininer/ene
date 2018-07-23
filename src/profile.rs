@@ -1,13 +1,10 @@
 use std::path::Path;
 use std::fs::{ self, File };
-use std::io::{ self, Write };
 use rand::{ Rng, OsRng };
 use failure::{ Error, err_msg };
 use argon2rs::{ Argon2, Variant };
 use serde_bytes::ByteBuf;
 use serde_cbor as cbor;
-use structopt::StructOpt;
-use termcolor::StandardStream;
 use directories::ProjectDirs;
 use crate::core::{ alg, key, Builder, Ene };
 use crate::core::format::{ PrivateKey, PublicKey, Envelope };
@@ -19,9 +16,13 @@ use crate::common::{ Stdio, askpass };
 
 impl Profile {
     pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
-        let sk_path = dir.data_local_dir().join("ene.key");
+        let mut sk_path = dir.data_local_dir().join("ene.key");
 
-        if self.init {
+        if self.init || self.generate.is_some() {
+            if let Some(path) = self.generate {
+                sk_path = path;
+            }
+
             check!(is_file sk_path);
 
             init(
@@ -35,6 +36,10 @@ impl Profile {
             check!(is_file sk_path);
             fs::copy(path, sk_path)?;
         } else if let Some(mut path) = self.export_pubkey {
+            if let Some(path) = self.export_from {
+                sk_path = path;
+            }
+
             let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
             let sk = askpass(|pass| open(pass.as_bytes(), &sk_packed))?;
             let (id, ..) = unwrap!(&sk_packed);
@@ -47,10 +52,10 @@ impl Profile {
             let pk_packed: PublicKey = Envelope::from((id.to_owned(), pk));
             cbor::to_writer(&mut File::create(&path)?, &pk_packed)?;
         } else if let Some(mut path) = self.export_privkey {
-            let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
-            let (id, ..) = unwrap!(&sk_packed);
-
             if path.is_dir() {
+                let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
+                let (id, ..) = unwrap!(&sk_packed);
+
                 path = path.join(format!("{}.ene", id));
             }
 
