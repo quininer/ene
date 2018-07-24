@@ -20,21 +20,6 @@ impl RecvFrom {
         // take sender
         let sender_pk = match (self.force, self.sender, self.sender_pubkey) {
             (true, _, _) => sender_pk,
-            (_, _, Some(path)) => {
-                let pk_packed: PublicKey = cbor::from_reader(&mut File::open(path)?)?;
-                let (id, pk) = unwrap!(pk_packed);
-
-                if id == sender_id {
-                    check!(pk(stdio, "sender pk different: {:?}, {:?}"):
-                        pk.ed25519, sender_pk.ed25519;
-                        pk.ristrettodh, sender_pk.ristrettodh;
-                    );
-
-                    pk
-                } else {
-                    return Err(err_msg(format!("sender id different: {} {}", id, sender_id)))
-                }
-            },
             (_, Some(id), _) => if id == sender_id {
                 let db_path = dir.data_local_dir().join("sled");
                 let db = Db::new(&db_path)?;
@@ -49,6 +34,21 @@ impl RecvFrom {
                 pk
             } else {
                 return Err(err_msg(format!("sender id different: {} {}", id, sender_id)))
+            },
+            (_, _, Some(path)) => {
+                let pk_packed: PublicKey = cbor::from_reader(&mut File::open(path)?)?;
+                let (id, pk) = unwrap!(pk_packed);
+
+                if id == sender_id {
+                    check!(pk(stdio, "sender pk different: {:?}, {:?}"):
+                        pk.ed25519, sender_pk.ed25519;
+                        pk.ristrettodh, sender_pk.ristrettodh;
+                    );
+
+                    pk
+                } else {
+                    return Err(err_msg(format!("sender id different: {} {}", id, sender_id)))
+                }
             },
             (..) => unreachable!()
         };
