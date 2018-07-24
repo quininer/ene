@@ -1,4 +1,5 @@
-use crate::alg::ParseError;
+use std::borrow::Cow;
+use std::option::NoneError;
 
 
 #[derive(Debug, Fail)]
@@ -31,10 +32,16 @@ pub enum ProtoError {
     Ed25519(ed25519_dalek::SignatureError)
 }
 
-impl From<ed25519_dalek::SignatureError> for ProtoError {
-    fn from(err: ed25519_dalek::SignatureError) -> ProtoError {
-        ProtoError::Ed25519(err)
-    }
+#[derive(Debug, Fail)]
+pub enum ParseError {
+    #[fail(display = "Unknown algorithm: {}", _0)]
+    Unknown(Cow<'static, str>),
+
+    #[fail(display = "Unexpected end")]
+    UnexpectedEnd,
+
+    #[fail(display = "Not available: {}", _0)]
+    NotAvailable(Cow<'static, str>)
 }
 
 impl<E> From<rand::Error> for Error<E> {
@@ -46,5 +53,17 @@ impl<E> From<rand::Error> for Error<E> {
 impl<E> From<ProtoError> for Error<E> {
     fn from(err: ProtoError) -> Error<E> {
         Error::Proto(err)
+    }
+}
+
+impl From<ed25519_dalek::SignatureError> for ProtoError {
+    fn from(err: ed25519_dalek::SignatureError) -> ProtoError {
+        ProtoError::Ed25519(err)
+    }
+}
+
+impl From<NoneError> for ParseError {
+    fn from(_: NoneError) -> ParseError {
+        ParseError::UnexpectedEnd
     }
 }

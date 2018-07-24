@@ -28,7 +28,7 @@ pub type Message = ristrettodh::Message;
 
 pub fn send<RNG: RngCore + CryptoRng>(
     rng: &mut RNG,
-    aead: &AeadCipher,
+    aead: &dyn AeadCipher,
     (ida, SecretKey(a, aa)): (&str, &SecretKey),
     (idb, PublicKey(bb)): (&str, &PublicKey),
     aad: &[u8],
@@ -63,7 +63,7 @@ pub fn send<RNG: RngCore + CryptoRng>(
 }
 
 pub fn recv(
-    aead: &AeadCipher,
+    aead: &dyn AeadCipher,
     (idb, SecretKey(b, bb)): (&str, &SecretKey),
     (ida, PublicKey(aa)): (&str, &PublicKey),
     ristrettodh::Message(xx): &Message,

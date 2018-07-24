@@ -21,7 +21,7 @@ macro_rules! try_unwrap {
             Some(k) => k,
             None => return Err(
                 crate::error::Error::Parse(
-                    crate::alg::ParseError::Unknown($alg.into())
+                    crate::error::ParseError::Unknown($alg.into())
                 )
             )
         }

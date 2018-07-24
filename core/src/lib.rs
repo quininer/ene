@@ -144,9 +144,7 @@ impl<'a> And<'a> {
                 Ok(Envelope::from((meta, proto.clone(), msg)))
             },
             Protocol::Ooake(alg::KeyExchange::RistrettoDH, enc) => {
-                let aead = match enc {
-                    alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
-                };
+                let aead = enc.take();
 
                 let ska = try_unwrap!(&ska.ristrettodh; RistrettoDH::NAME);
                 let pka = ristrettodh::PublicKey::from_secret(ska);
@@ -180,9 +178,7 @@ impl<'a> And<'a> {
                 Ok(Envelope::from((meta, proto.clone(), msg)))
             },
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
-                let aead = match enc {
-                    alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
-                };
+                let aead = enc.take();
 
                 let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
                 let sigpk_a = ed25519::PublicKey::from_secret(sigsk_a);
@@ -235,9 +231,7 @@ impl<'a> And<'a> {
                 Ok(Vec::new())
             },
             Protocol::Ooake(alg::KeyExchange::RistrettoDH, enc) => {
-                let aead = match enc {
-                    alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
-                };
+                let aead = enc.take();
 
                 let (msg, c): (ooake::Message, Bytes) = DE::from_slice(message)?;
 
@@ -254,9 +248,7 @@ impl<'a> And<'a> {
                     .map_err(Into::into)
             },
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
-                let aead = match enc {
-                    alg::Encrypt::Aes128Colm0 => &Aes128Colm0 as &'static AeadCipher
-                };
+                let aead = enc.take();
 
                 let (msg, c): (sigae::Message<RistrettoDH>, Bytes) = DE::from_slice(message)?;
 

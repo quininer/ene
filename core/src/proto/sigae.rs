@@ -29,7 +29,7 @@ pub fn send<
     KEX: KeyExchange,
 >(
     rng: &mut RNG,
-    aead: &AeadCipher,
+    aead: &dyn AeadCipher,
     (ida, sk): (&str, &SIG::PrivateKey),
     (idb, pk): (&str, &KEX::PublicKey),
     aad: &[u8],
@@ -81,7 +81,7 @@ pub fn recv<
     SIG: Signature,
     KEX: KeyExchange,
 >(
-    aead: &AeadCipher,
+    aead: &dyn AeadCipher,
     (idb, sk, pk): (&str, &KEX::PrivateKey, &KEX::PublicKey),
     (ida, pka): (&str, &SIG::PublicKey),
     Message { m, c }: &Message<KEX>,

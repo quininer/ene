@@ -1,6 +1,7 @@
-use std::borrow::Cow;
 use std::str::FromStr;
-use std::option::NoneError;
+use crate::error::ParseError;
+use crate::define::AeadCipher;
+use crate::aead::aes128colm0::Aes128Colm0;
 
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -37,22 +38,11 @@ pub enum Encrypt {
     Aes128Colm0
 }
 
-
-#[derive(Debug, Fail)]
-pub enum ParseError {
-    #[fail(display = "unknown algorithm: {}", _0)]
-    Unknown(Cow<'static, str>),
-
-    #[fail(display = "unexpected end")]
-    UnexpectedEnd,
-
-    #[fail(display = "Not available: {}", _0)]
-    NotAvailable(Cow<'static, str>)
-}
-
-impl From<NoneError> for ParseError {
-    fn from(_: NoneError) -> ParseError {
-        ParseError::UnexpectedEnd
+impl Encrypt {
+    pub fn take(&self) -> &'static dyn AeadCipher {
+        match self {
+            Encrypt::Aes128Colm0 => &Aes128Colm0
+        }
     }
 }
 

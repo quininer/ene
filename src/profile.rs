@@ -106,10 +106,7 @@ pub fn init(
 }
 
 pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::SecretKey) -> Result<PrivateKey, Error> {
-    let aead = match enc {
-        alg::Encrypt::Aes128Colm0 => &aes128colm0::Aes128Colm0 as &'static AeadCipher,
-        _ => return Err(err_msg("unknown encrypt algorithm"))
-    };
+    let aead = enc.take();
 
     let mut salt = vec![0; 16];
     let mut tmpkey = vec![0; aead.key_length() + aead.nonce_length()];
@@ -132,11 +129,7 @@ pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::
 
 pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<Ene, Error> {
     let (id, enc, salt, c) = unwrap!(sk_packed);
-
-    let aead = match enc {
-        alg::Encrypt::Aes128Colm0 => &aes128colm0::Aes128Colm0 as &'static AeadCipher,
-        _ => return Err(err_msg("unknown encrypt algorithm"))
-    };
+    let aead = enc.take();
 
     let mut tmpkey = vec![0; aead.key_length() + aead.nonce_length()];
     Argon2::default(Variant::Argon2d)
