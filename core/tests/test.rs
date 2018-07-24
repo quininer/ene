@@ -3,7 +3,7 @@ extern crate serde;
 extern crate serde_cbor as cbor;
 extern crate ene_core;
 
-use rand::{ Rng, OsRng };
+use rand::{ Rng, thread_rng };
 use rand::distributions::Alphanumeric;
 use serde::{ Serialize, Deserialize };
 use serde_cbor::error::Error as CborError;
@@ -32,7 +32,7 @@ impl Serde for Cbor {
 
 #[test]
 fn test_ene() {
-    let mut rng = OsRng::new().unwrap();
+    let mut rng = thread_rng();
 
     let alice = "alice@core.ene";
     let alice_sk = Builder::default().generate(alice, &mut rng);

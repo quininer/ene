@@ -11,7 +11,7 @@ use super::db::Db;
 impl SendTo {
     pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
         // take receiver
-        let (receiver_id, receiver_pk) = if let Some(ref pk_path) = self.recipient_file {
+        let (receiver_id, receiver_pk) = if let Some(ref pk_path) = self.recipient_pubkey {
             let pk_packed: PublicKey = cbor::from_reader(&mut File::open(pk_path)?)?;
             unwrap!(pk_packed)
         } else if let Some(id) = self.recipient {

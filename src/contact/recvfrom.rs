@@ -3,7 +3,7 @@ use std::fs::{ self, File };
 use failure::{ Error, err_msg };
 use serde_cbor as cbor;
 use directories::ProjectDirs;
-use crate::core::format::{ PrivateKey, Message, Meta };
+use crate::core::format::{ PrivateKey, PublicKey, Message, Meta };
 use crate::{ profile, opts::RecvFrom };
 use crate::common::{ Cbor, Stdio, askpass };
 use super::db::Db;
@@ -18,9 +18,24 @@ impl RecvFrom {
         let Meta { s: (sender_id, sender_pk), r } = meta;
 
         // take sender
-        let sender_pk = match (self.force, self.sender) {
-            (true, _) => sender_pk,
-            (_, Some(ref sender)) if sender == &sender_id => {
+        let sender_pk = match (self.force, self.sender, self.sender_pubkey) {
+            (true, _, _) => sender_pk,
+            (_, _, Some(path)) => {
+                let pk_packed: PublicKey = cbor::from_reader(&mut File::open(path)?)?;
+                let (id, pk) = unwrap!(pk_packed);
+
+                if id == sender_id {
+                    check!(pk(stdio, "sender pk different: {:?}, {:?}"):
+                        pk.ed25519, sender_pk.ed25519;
+                        pk.ristrettodh, sender_pk.ristrettodh;
+                    );
+
+                    pk
+                } else {
+                    return Err(err_msg(format!("sender id different: {} {}", id, sender_id)))
+                }
+            },
+            (_, Some(id), _) => if id == sender_id {
                 let db_path = dir.data_local_dir().join("sled");
                 let db = Db::new(&db_path)?;
                 let pk = db.get(&sender_id)?
@@ -32,9 +47,10 @@ impl RecvFrom {
                 );
 
                 pk
+            } else {
+                return Err(err_msg(format!("sender id different: {} {}", id, sender_id)))
             },
-            (_, Some(ref sender)) => return Err(err_msg(format!("sender id different: {} {}", sender, sender_id))),
-            (_, None) => unreachable!()
+            (..) => unreachable!()
         };
 
         // take receiver

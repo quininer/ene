@@ -151,11 +151,11 @@ pub struct SendTo {
     pub profile: Option<PathBuf>,
 
     #[structopt(
-        long = "recipient-file",
+        long = "recipient-pubkey",
         value_name = "PATH", group = "recipient",
         parse(from_os_str)
     )]
-    pub recipient_file: Option<PathBuf>
+    pub recipient_pubkey: Option<PathBuf>
 }
 
 #[derive(Debug, StructOpt)]
@@ -184,7 +184,14 @@ pub struct RecvFrom {
     pub force: bool,
 
     #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
-    pub profile: Option<PathBuf>
+    pub profile: Option<PathBuf>,
+
+    #[structopt(
+        long = "sender-pubkey",
+        value_name = "PATH", group = "sender",
+        parse(from_os_str)
+    )]
+    pub sender_pubkey: Option<PathBuf>
 }
 
 fn arg_group(name: &'static str) -> ArgGroup<'static> {
