@@ -3,7 +3,7 @@ mod sendto;
 mod recvfrom;
 
 use std::fs::File;
-use failure::{ Error, err_msg };
+use failure::{ ResultExt, Error, err_msg };
 use directories::ProjectDirs;
 use serde_cbor as cbor;
 use crate::core::format::{ PublicKey, Envelope };
@@ -29,7 +29,7 @@ impl Contact {
                     }
                 };
 
-                println!("{}: {:?}", id, pk.to_short());
+                stdio.info(format_args!("{}: {:?}", id, pk.to_short()))?;
             }
         } else if let Some(path) = self.import {
             let pk: PublicKey = cbor::from_reader(&mut File::open(path)?)?;
@@ -37,7 +37,7 @@ impl Contact {
 
             db.set(&id, &pk)?;
 
-            println!("import {}", id);
+            stdio.info(format_args!("import {}", id))?;
         } else if let Some(path) = self.export {
             let id = self.id.ok_or_else(|| err_msg("need id"))?;
 

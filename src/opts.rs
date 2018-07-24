@@ -27,7 +27,7 @@ arg_enum! {
 pub enum SubCommand {
     #[structopt(
         name = "profile", about = "Profile", display_order = 1,
-        raw(group = "arg_group(\"profile\")")
+        raw(group = "arg_group(\"operate\")")
     )]
     Profile(Profile),
 
@@ -54,18 +54,10 @@ pub enum SubCommand {
 pub struct Profile {
     #[structopt(
         long = "init",
-        group = "profile", requires = "id",
+        group = "operate", requires = "id",
         display_order = 1
     )]
     pub init: bool,
-
-    #[structopt(
-        long = "generate", value_name = "PATH",
-        group = "profile", requires = "id",
-        parse(from_os_str),
-        display_order = 1
-    )]
-    pub generate: Option<PathBuf>,
 
     #[structopt(name = "id", value_name = "ID")]
     pub id: Option<String>,
@@ -78,31 +70,30 @@ pub struct Profile {
 
     #[structopt(
         short = "i", long = "import",
-        value_name = "PATH", group = "profile",
+        value_name = "PATH", group = "operate",
         parse(from_os_str)
     )]
     pub import: Option<PathBuf>,
 
     #[structopt(
-        short = "f", long = "export-from",
-        value_name = "PATH", requires = "export_pubkey",
-        parse(from_os_str)
-    )]
-    pub export_from: Option<PathBuf>,
-
-    #[structopt(
         short = "e", long = "export-pubkey",
-        value_name = "PATH", group = "profile",
+        value_name = "PATH", group = "operate",
         parse(from_os_str)
     )]
     pub export_pubkey: Option<PathBuf>,
 
     #[structopt(
         short = "E", long = "export-privkey",
-        value_name = "PATH", group = "profile",
+        value_name = "PATH", group = "operate",
         parse(from_os_str)
     )]
     pub export_privkey: Option<PathBuf>,
+
+    #[structopt(
+        short = "p", long = "profile", value_name = "PATH",
+        parse(from_os_str)
+    )]
+    pub profile: Option<PathBuf>
 }
 
 #[derive(Debug, StructOpt)]

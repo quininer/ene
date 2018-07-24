@@ -41,11 +41,30 @@ impl Termination for Exit<Error> {
     fn report(self) -> i32 {
         let Exit(result, mut stdio) = self;
 
+        fn is_backtrace() -> bool {
+            match env::var_os("RUST_BACKTRACE") {
+                Some(ref v) if v == "0" => false,
+                Some(_) => true,
+                None => false
+            }
+        }
+
         match result {
             Ok(()) => ExitCode::SUCCESS.report(),
             Err(err) => {
-                let _ = stdio.eprint(|stderr| write!(stderr, "Error: "));
-                let _ = stdio.warn(format_args!("{}", err));
+                let _ = stdio.eprint(|stderr| -> io::Result<()> {
+                    writeln!(stderr, "error:")?;
+                    writeln!(stderr, "{}", err)?;
+                    for cause in err.causes().skip(1) {
+                        writeln!(stderr, "{}", cause)?;
+                    }
+
+                    if is_backtrace() {
+                        writeln!(stderr, "{}", err.backtrace())?;
+                    }
+
+                    Ok(())
+                });
 
                 ExitCode::FAILURE.report()
             }
@@ -58,7 +77,7 @@ pub fn askpass<F, T>(f: F)
     -> Result<T, Error>
     where F: FnOnce(&str) -> Result<T, Error>
 {
-    const PROMPT: &str = "Password: ";
+    const PROMPT: &str = "Password:";
 
     if let Ok(bin) = env::var("ENE_ASKPASS") {
         Command::new(bin)
@@ -115,11 +134,18 @@ impl Stdio {
         }
     }
 
-    pub fn info(&mut self, args: fmt::Arguments) -> io::Result<()> {
+    pub fn good(&mut self, args: fmt::Arguments) -> io::Result<()> {
         self.stdout.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
         self.stdout.write_fmt(args)?;
         writeln!(self.stdout)?;
         self.stdout.set_color(ColorSpec::new().set_fg(None))?;
+        Ok(())
+    }
+
+    pub fn info(&mut self, args: fmt::Arguments) -> io::Result<()> {
+        self.stdout.set_color(ColorSpec::new().set_fg(None))?;
+        self.stdout.write_fmt(args)?;
+        writeln!(self.stdout)?;
         Ok(())
     }
 
@@ -133,18 +159,14 @@ impl Stdio {
 
     pub fn print<E, F>(&mut self, f: F)
         -> Result<(), E>
-        where
-            F: FnOnce(&mut StandardStream) -> Result<(), E>,
-            E: From<io::Error>
+        where F: FnOnce(&mut StandardStream) -> Result<(), E>,
     {
         f(&mut self.stdout)
     }
 
     pub fn eprint<E, F>(&mut self, f: F)
         -> Result<(), E>
-        where
-            F: FnOnce(&mut StandardStream) -> Result<(), E>,
-            E: From<io::Error>
+        where F: FnOnce(&mut StandardStream) -> Result<(), E>,
     {
         f(&mut self.stderr)
     }

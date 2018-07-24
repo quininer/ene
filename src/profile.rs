@@ -18,8 +18,8 @@ impl Profile {
     pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
         let mut sk_path = dir.data_local_dir().join("ene.key");
 
-        if self.init || self.generate.is_some() {
-            if let Some(path) = self.generate {
+        if self.init {
+            if let Some(path) = self.profile {
                 sk_path = path;
             }
 
@@ -36,7 +36,7 @@ impl Profile {
             check!(is_file sk_path);
             fs::copy(path, sk_path)?;
         } else if let Some(mut path) = self.export_pubkey {
-            if let Some(path) = self.export_from {
+            if let Some(path) = self.profile {
                 sk_path = path;
             }
 
