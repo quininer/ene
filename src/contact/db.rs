@@ -58,18 +58,18 @@ impl Db {
             .map_err(Into::into)
     }
 
-    pub fn filter(&'a self, start: &'a str) -> Filter<'a> {
-        let iter = self.tree.iter();
+    pub fn filter(&'a self, start: &'b str) -> Filter<'a, 'b> {
+        let iter = self.tree.scan(start.as_bytes());
         Filter { iter, start }
     }
 }
 
-pub struct Filter<'a> {
+pub struct Filter<'a, 'b> {
     iter: Iter<'a>,
-    start: &'a str
+    start: &'b str
 }
 
-impl<'a> Iterator for Filter<'a> {
+impl Iterator for Filter<'a, 'b> {
     type Item = Result<(String, key::PublicKey), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
