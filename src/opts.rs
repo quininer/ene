@@ -3,13 +3,24 @@ use structopt::clap::ArgGroup;
 use crate::core::alg::{ self, Protocol };
 
 
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "ene")]
+#[structopt(long_about = r#"
+Supported algorithms:
+* Signature: ed25519
+* KeyExchange: ristrettodh
+* Encryption: aes128colm0
+"#)]
 pub struct Options {
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
 
-    #[structopt(short = "c", long = "color", value_name = "MODE", default_value = "auto")]
+    /// Controls when to use color
+    #[structopt(
+        short = "c", long = "color", value_name = "MODE",
+        raw(possible_values = "&ColorChoice::variants()"), default_value = "Auto"
+    )]
     pub color: ColorChoice
 }
 
@@ -25,26 +36,30 @@ arg_enum! {
 
 #[derive(Debug, StructOpt)]
 pub enum SubCommand {
+    /// Manage Profile
     #[structopt(
-        name = "profile", about = "Profile", display_order = 1,
+        name = "profile", display_order = 1,
         raw(group = "arg_group(\"operate\")")
     )]
     Profile(Profile),
 
+    /// Manage Contact
     #[structopt(
-        name = "contact", about = "Contact", display_order = 2,
+        name = "contact", display_order = 2,
         raw(group = "arg_group(\"contact\")")
     )]
     Contact(Contact),
 
+    /// Encrypt Message
     #[structopt(
-        name = "sendto", about = "SendTo", display_order = 3,
+        name = "sendto", display_order = 3,
         raw(group = "arg_group(\"recipient\")")
     )]
     SendTo(SendTo),
 
+    /// Decrypt Message
     #[structopt(
-        name = "recvfrom", about = "RecvFrom", display_order = 4,
+        name = "recvfrom", display_order = 4,
         raw(group = "arg_group(\"sender\")")
     )]
     RecvFrom(RecvFrom)
@@ -52,6 +67,7 @@ pub enum SubCommand {
 
 #[derive(Debug, StructOpt)]
 pub struct Profile {
+    /// Initializes a Profile
     #[structopt(
         long = "init",
         group = "operate", requires = "id",
@@ -59,15 +75,22 @@ pub struct Profile {
     )]
     pub init: bool,
 
+    /// The ID of Profile
     #[structopt(name = "id", value_name = "ID")]
     pub id: Option<String>,
 
-    #[structopt(short = "a", long = "algorithm", value_name = "STRING")]
-    pub algorithm: Option<String>,
+    /// Choose PublicKey algorithm
+    #[structopt(short = "a", long = "choose-pubkey", value_name = "STRING")]
+    pub choose_pubkey: Option<String>,
 
-    #[structopt(short = "X", long = "encrypt-cipher", value_name = "CIPHER")]
-    pub encrypt: Option<alg::Encrypt>,
+    /// Choose the encryption algorithm used to encrypt profile
+    #[structopt(
+        short = "x", long = "choose-encrypt", value_name = "ENCRYPT",
+        raw(possible_values = "alg::Encrypt::names()")
+    )]
+    pub choose_encrypt: Option<alg::Encrypt>,
 
+    /// Import a Profile
     #[structopt(
         short = "i", long = "import",
         value_name = "PATH", group = "operate",
@@ -75,13 +98,7 @@ pub struct Profile {
     )]
     pub import: Option<PathBuf>,
 
-    #[structopt(
-        short = "e", long = "export-pubkey",
-        value_name = "PATH", group = "operate",
-        parse(from_os_str)
-    )]
-    pub export_pubkey: Option<PathBuf>,
-
+    /// Export a Profile
     #[structopt(
         short = "E", long = "export-privkey",
         value_name = "PATH", group = "operate",
@@ -89,8 +106,17 @@ pub struct Profile {
     )]
     pub export_privkey: Option<PathBuf>,
 
+    /// Export a PublicKey
     #[structopt(
-        short = "p", long = "profile", value_name = "PATH",
+        short = "e", long = "export-pubkey",
+        value_name = "PATH", group = "operate",
+        parse(from_os_str)
+    )]
+    pub export_pubkey: Option<PathBuf>,
+
+    /// Profile path
+    #[structopt(
+        short = "p", long = "profile-path", value_name = "PATH",
         parse(from_os_str)
     )]
     pub profile: Option<PathBuf>
@@ -98,15 +124,19 @@ pub struct Profile {
 
 #[derive(Debug, StructOpt)]
 pub struct Contact {
+    /// List the specified contacts
     #[structopt(long = "list", group = "contact")]
     pub list: bool,
 
+    /// Contact ID
     #[structopt(name = "id", value_name = "ID")]
     pub id: Option<String>,
 
+    /// Import a contact
     #[structopt(short = "i", long = "import", parse(from_os_str), group = "contact")]
     pub import: Option<PathBuf>,
 
+    /// Export a contact
     #[structopt(
         short = "e", long = "export",
         requires = "id", group = "contact",
@@ -114,42 +144,51 @@ pub struct Contact {
     )]
     pub export: Option<PathBuf>,
 
+    /// Delete a contact
     #[structopt(short = "d", long = "delete", requires = "id", group = "contact")]
     pub delete: bool,
 }
 
 #[derive(Debug, StructOpt)]
 pub struct SendTo {
+    /// Contact ID
     #[structopt(name = "id", value_name = "ID", group = "recipient")]
     pub recipient: Option<String>,
 
+    /// Input file
     #[structopt(
-        short = "i", long = "input",
-        value_name = "PATH",
+        short = "i", long = "input", value_name = "PATH",
         parse(from_os_str)
     )]
     pub input: PathBuf,
 
+    /// Output file
     #[structopt(
-        short = "o", long = "output",
-        value_name = "PATH",
+        short = "o", long = "output", value_name = "PATH",
         parse(from_os_str)
     )]
     pub output: Option<PathBuf>,
 
+    /// Specifies encryption protocol
     #[structopt(
-        short = "p", long = "protocol",
+        long = "protocol",
         value_name = "PROTOCOL",
         default_value = "ooake-ristrettodh-aes128colm0"
     )]
     pub protocol: Protocol,
 
+    /// Associated Data
     #[structopt(short = "A", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
-    #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
+    /// Profile path
+    #[structopt(
+        short = "p", long = "profile", value_name = "PATH",
+        parse(from_os_str)
+    )]
     pub profile: Option<PathBuf>,
 
+    /// Contact PublicKey path
     #[structopt(
         long = "recipient-pubkey",
         value_name = "PATH", group = "recipient",
@@ -160,9 +199,11 @@ pub struct SendTo {
 
 #[derive(Debug, StructOpt)]
 pub struct RecvFrom {
+    /// Contact ID
     #[structopt(name = "id", value_name = "ID", group = "sender")]
     pub sender: Option<String>,
 
+    /// Input file
     #[structopt(
         short = "i", long = "input",
         value_name = "PATH",
@@ -170,6 +211,7 @@ pub struct RecvFrom {
     )]
     pub input: PathBuf,
 
+    /// Output file
     #[structopt(
         short = "o", long = "output",
         value_name = "PATH",
@@ -177,15 +219,22 @@ pub struct RecvFrom {
     )]
     pub output: Option<PathBuf>,
 
+    /// Associated Data
     #[structopt(short = "A", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
+    /// Force decrypt
     #[structopt(short = "f", long = "force", group = "sender")]
     pub force: bool,
 
-    #[structopt(long = "profile", value_name = "PATH", parse(from_os_str))]
+    /// Profile path
+    #[structopt(
+        short = "p", long = "profile", value_name = "PATH",
+        parse(from_os_str)
+    )]
     pub profile: Option<PathBuf>,
 
+    /// Contact PublicKey path
     #[structopt(
         long = "sender-pubkey",
         value_name = "PATH", group = "sender",

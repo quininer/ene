@@ -39,6 +39,10 @@ pub enum Encrypt {
 }
 
 impl Encrypt {
+    pub const fn names() -> &'static [&'static str] {
+        &["aes128colm0"]
+    }
+
     pub fn take(&self) -> &'static dyn AeadCipher {
         match self {
             Encrypt::Aes128Colm0 => &Aes128Colm0

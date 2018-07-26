@@ -8,15 +8,13 @@ use serde_cbor as cbor;
 use directories::ProjectDirs;
 use crate::core::{ alg, key, Builder, Ene };
 use crate::core::format::{ PrivateKey, PublicKey, Envelope };
-use crate::core::aead::aes128colm0;
-use crate::core::define::AeadCipher;
 use crate::opts::Profile;
 use crate::common::{ Stdio, askpass };
 
 
 impl Profile {
     pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
-        let mut sk_path = dir.data_local_dir().join("ene.key");
+        let mut sk_path = dir.data_local_dir().join("key.ene");
 
         if self.init {
             if let Some(path) = self.profile {
@@ -28,8 +26,8 @@ impl Profile {
             init(
                 stdio,
                 &self.id.unwrap(),
-                self.algorithm.as_ref().map(String::as_str),
-                self.encrypt.unwrap_or(alg::Encrypt::Aes128Colm0),
+                self.choose_pubkey.as_ref().map(String::as_str),
+                self.choose_encrypt.unwrap_or(alg::Encrypt::Aes128Colm0),
                 &sk_path
             )?;
         } else if let Some(path) = self.import {
