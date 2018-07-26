@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::str::FromStr;
 use std::fs::{ self, File };
 use rand::{ Rng, OsRng };
 use failure::{ Error, err_msg };
@@ -71,23 +72,11 @@ impl Profile {
 pub fn init(
     stdio: &mut Stdio,
     id: &str,
-    algorithm: Option<&str>, enc: alg::Encrypt,
+    algorithms: Option<&str>, enc: alg::Encrypt,
     output: &Path
 ) -> Result<(), Error> {
-    let builder = if let Some(algorithm) = algorithm {
-        let mut builder = Builder::empty();
-
-        for a in algorithm.split(',') {
-            match a.trim().to_lowercase().as_str() {
-                "ed25519" => builder.ed25519 = true,
-                "ristrettodh" => builder.ristrettodh = true,
-                a => {
-                    stdio.warn(format_args!("{} algorithm does not support", a))?;
-                }
-            }
-        }
-
-        builder
+    let builder = if let Some(algorithms) = algorithms {
+        Builder::from_str(algorithms)?
     } else {
         Builder::default()
     };

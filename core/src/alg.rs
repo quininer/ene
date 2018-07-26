@@ -38,6 +38,18 @@ pub enum Encrypt {
     Aes128Colm0
 }
 
+impl Signature {
+    pub const fn names() -> &'static [&'static str] {
+        &["ed25519"]
+    }
+}
+
+impl KeyExchange {
+    pub const fn names() -> &'static [&'static str] {
+        &["ristrettodh"]
+    }
+}
+
 impl Encrypt {
     pub const fn names() -> &'static [&'static str] {
         &["aes128colm0"]

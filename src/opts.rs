@@ -6,12 +6,7 @@ use crate::core::alg::{ self, Protocol };
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "ene")]
-#[structopt(long_about = r#"
-Supported algorithms:
-* Signature: ed25519
-* KeyExchange: ristrettodh
-* Encryption: aes128colm0
-"#)]
+#[structopt(raw(long_about = "about()"))]
 pub struct Options {
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
@@ -245,4 +240,20 @@ pub struct RecvFrom {
 
 fn arg_group(name: &'static str) -> ArgGroup<'static> {
     ArgGroup::with_name(name).required(true)
+}
+
+/// TODO const?
+fn about() -> &'static str {
+    let about = format!(r#"
+Supported about:
+* Signature: {}
+* KeyExchange: {}
+* Encryption: {}
+"#,
+        alg::Signature::names().join(", "),
+        alg::KeyExchange::names().join(", "),
+        alg::Encrypt::names().join(", ")
+    );
+
+    Box::leak(about.into_boxed_str())
 }

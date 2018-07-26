@@ -26,14 +26,16 @@ pub mod aead;
 pub mod format;
 pub mod error;
 
+use std::str::FromStr;
 use rand::{ Rng, CryptoRng, OsRng };
 use serde_bytes::{ ByteBuf, Bytes };
-use crate::format::Message;
 use crate::alg::Protocol;
+use crate::format::Message;
+use crate::error::ParseError;
 use crate::proto::{ ooake, sigae, sonly };
 use crate::key::ed25519::{ self, Ed25519 };
 use crate::key::ristrettodh::{ self, RistrettoDH };
-use crate::define::{ Signature, KeyExchange, AeadCipher, Serde };
+use crate::define::{ Signature, KeyExchange, Serde };
 
 
 pub struct Ene {
@@ -266,5 +268,23 @@ impl<'a> And<'a> {
                     .map_err(Into::into)
             }
         }
+    }
+}
+
+impl FromStr for Builder {
+    type Err = ParseError;
+
+    fn from_str(algorithms: &str) -> Result<Self, Self::Err> {
+        let mut builder = Builder::empty();
+
+        for a in algorithms.split(',') {
+            match a.trim().to_lowercase().as_str() {
+                "ed25519" => builder.ed25519 = true,
+                "ristrettodh" => builder.ristrettodh = true,
+                a => return Err(ParseError::Unknown(a.to_string().into()))
+            }
+        }
+
+        Ok(builder)
     }
 }
