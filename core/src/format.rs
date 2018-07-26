@@ -47,7 +47,7 @@ pub struct Meta {
     pub r: Option<(String, key::ShortPublicKey)>
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 #[derive(Serialize, Deserialize)]
 pub struct Short(pub u64);
 

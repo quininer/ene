@@ -17,15 +17,6 @@ macro_rules! check {
             return Err(err_msg(format!("File already exists: {}", $path.display())));
         }
     };
-    ( pk ( $log:expr, $fmt:expr ) : $( $pk:expr, $pack_pk:expr );* ; ) => {
-        $(
-            if let (Some(pk), Some(pack_pk)) = (&$pk, &$pack_pk) {
-                if pk != pack_pk {
-                    $log.warn(format_args!($fmt, pk, pack_pk))?;
-                }
-            }
-        )*
-    }
 }
 
 macro_rules! unwrap {

@@ -111,7 +111,7 @@ pub struct Profile {
 
     /// Profile path
     #[structopt(
-        short = "p", long = "profile-path", value_name = "PATH",
+        short = "p", long = "profile", value_name = "PATH",
         parse(from_os_str)
     )]
     pub profile: Option<PathBuf>
@@ -166,9 +166,8 @@ pub struct SendTo {
 
     /// Specifies encryption protocol
     #[structopt(
-        long = "protocol",
-        value_name = "PROTOCOL",
-        default_value = "ooake-ristrettodh-aes128colm0"
+        long = "protocol", value_name = "PROTOCOL",
+        raw(default_value = "Protocol::default_name()")
     )]
     pub protocol: Protocol,
 
@@ -200,16 +199,14 @@ pub struct RecvFrom {
 
     /// Input file
     #[structopt(
-        short = "i", long = "input",
-        value_name = "PATH",
+        short = "i", long = "input", value_name = "PATH",
         parse(from_os_str)
     )]
     pub input: PathBuf,
 
     /// Output file
     #[structopt(
-        short = "o", long = "output",
-        value_name = "PATH",
+        short = "o", long = "output", value_name = "PATH",
         parse(from_os_str)
     )]
     pub output: Option<PathBuf>,
@@ -245,7 +242,7 @@ fn arg_group(name: &'static str) -> ArgGroup<'static> {
 /// TODO const?
 fn about() -> &'static str {
     let about = format!(r#"
-Supported about:
+Supported algorithms:
 * Signature: {}
 * KeyExchange: {}
 * Encryption: {}

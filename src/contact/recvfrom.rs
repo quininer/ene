@@ -26,10 +26,9 @@ impl RecvFrom {
                 let pk = db.get(&sender_id)?
                     .ok_or_else(|| err_msg("not found"))?;
 
-                check!(pk(stdio, "sender pk different: {:?}, {:?}"):
-                    pk.ed25519, sender_pk.ed25519;
-                    pk.ristrettodh, sender_pk.ristrettodh;
-                );
+                pk.contains(&sender_pk, |name, pk, send_pk|
+                    stdio.warn(format_args!("sender {} pk different: {:?}, {:?}", name, pk, send_pk))
+                )?;
 
                 pk
             } else {
@@ -40,10 +39,9 @@ impl RecvFrom {
                 let (id, pk) = unwrap!(pk_packed);
 
                 if id == sender_id {
-                    check!(pk(stdio, "sender pk different: {:?}, {:?}"):
-                        pk.ed25519, sender_pk.ed25519;
-                        pk.ristrettodh, sender_pk.ristrettodh;
-                    );
+                    pk.contains(&sender_pk, |name, pk, send_pk|
+                        stdio.warn(format_args!("sender {} pk different: {:?}, {:?}", name, pk, send_pk))
+                    )?;
 
                     pk
                 } else {
@@ -72,11 +70,9 @@ impl RecvFrom {
             }
 
             let short_pk = sk.as_secret().to_public().to_short();
-
-            check!(pk(stdio, "recipient pk different: {:?}, {:?}"):
-                short_pk.ed25519, receiver_pk.ed25519;
-                short_pk.ristrettodh, receiver_pk.ristrettodh;
-            );
+            short_pk.contains(&receiver_pk, |name, pk, recv_pk|
+                stdio.warn(format_args!("recipient {} pk different: {:?}, {:?}", name, pk, recv_pk))
+            )?;
         }
 
         // decrypt message

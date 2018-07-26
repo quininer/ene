@@ -38,6 +38,12 @@ pub enum Encrypt {
     Aes128Colm0
 }
 
+impl Protocol {
+    pub const fn default_name() -> &'static str {
+        "ooake-ristrettodh-aes128colm0"
+    }
+}
+
 impl Signature {
     pub const fn names() -> &'static [&'static str] {
         &["ed25519"]
