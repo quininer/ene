@@ -1,4 +1,4 @@
-#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait)]
+#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait, const_fn)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
@@ -33,7 +33,6 @@ use crate::alg::Protocol;
 use crate::proto::{ ooake, sigae, sonly };
 use crate::key::ed25519::{ self, Ed25519 };
 use crate::key::ristrettodh::{ self, RistrettoDH };
-use crate::aead::aes128colm0::Aes128Colm0;
 use crate::define::{ Signature, KeyExchange, AeadCipher, Serde };
 
 

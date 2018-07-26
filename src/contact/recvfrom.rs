@@ -57,7 +57,7 @@ impl RecvFrom {
         let sk_packed: PrivateKey = if let Some(ref sk_path) = self.profile {
             cbor::from_reader(&mut File::open(sk_path)?)?
         } else {
-            let sk_path = dir.data_local_dir().join("ene.key");
+            let sk_path = dir.data_local_dir().join("key.ene");
             cbor::from_reader(&mut File::open(sk_path)?)?
         };
 

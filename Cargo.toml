@@ -4,7 +4,7 @@ cargo-features = ["edition"]
 name = "ene"
 version = "0.1.0"
 authors = ["quininer <quininer@live.com>"]
-description = "An experimental email encryption tool"
+description = "An experimental end to end email encryption tool"
 license = "MIT"
 edition = "2018"
 
