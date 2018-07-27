@@ -9,15 +9,13 @@ use crate::define::{ Packing, KeyExchange };
 use crate::error::ProtoError;
 
 
-#[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) Scalar, pub(crate) RistrettoPoint);
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Eq, PartialEq)]
 #[derive(Serialize)]
 pub struct PublicKey(pub(crate) RistrettoPoint);
 
-#[derive(Clone, Debug)]
 #[derive(Serialize)]
 pub struct Message(pub(crate) RistrettoPoint);
 
@@ -71,54 +69,38 @@ macro_rules! de {
 de!(PublicKey);
 de!(Message);
 
+macro_rules! packing {
+    ( $t:ident ) => {
+        impl Packing for $t {
+            const BYTES_LENGTH: usize = 32;
 
-impl Packing for PublicKey {
-    const BYTES_LENGTH: usize = 32;
+            fn read_bytes<F, R>(&self, f: F) -> R
+                where F: FnOnce(&[u8]) -> R
+            {
+                f(self.0.compress().as_bytes())
+            }
 
-    fn read_bytes<F, R>(&self, f: F) -> R
-        where F: FnOnce(&[u8]) -> R
-    {
-        f(self.0.compress().as_bytes())
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError> {
-        if bytes.len() == Self::BYTES_LENGTH {
-            check!(bytes);
-            let mut arr = [0u8; 32];
-            arr.copy_from_slice(bytes);
-            CompressedRistretto(arr)
-                .decompress()
-                .map(PublicKey)
-                .ok_or(ProtoError::InvalidValue("decompression failed"))
-        } else {
-            Err(ProtoError::InvalidLength)
+            fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError> {
+                if bytes.len() == Self::BYTES_LENGTH {
+                    check!(bytes);
+                    let mut arr = [0u8; 32];
+                    arr.copy_from_slice(bytes);
+                    CompressedRistretto(arr)
+                        .decompress()
+                        .map($t)
+                        .ok_or(ProtoError::InvalidValue("decompression failed"))
+                } else {
+                    Err(ProtoError::InvalidLength)
+                }
+            }
         }
+
+
     }
 }
 
-impl Packing for Message {
-    const BYTES_LENGTH: usize = 32;
-
-    fn read_bytes<F, R>(&self, f: F) -> R
-        where F: FnOnce(&[u8]) -> R
-    {
-        f(self.0.compress().as_bytes())
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Result<Self, ProtoError> {
-        if bytes.len() == Self::BYTES_LENGTH {
-            check!(bytes);
-            let mut arr = [0u8; 32];
-            arr.copy_from_slice(bytes);
-            CompressedRistretto(arr)
-                .decompress()
-                .map(Message)
-                .ok_or(ProtoError::InvalidValue("decompression failed"))
-        } else {
-            Err(ProtoError::InvalidLength)
-        }
-    }
-}
+packing!(PublicKey);
+packing!(Message);
 
 
 pub struct RistrettoDH;

@@ -4,7 +4,11 @@ cargo-features = ["edition"]
 name = "ene-core"
 version = "0.1.0"
 authors = ["quininer <quininer@live.com>"]
+license = "MIT"
 edition = "2018"
+
+[features]
+pqc = []
 
 [dependencies]
 failure = "0.1"
@@ -16,6 +20,7 @@ digest = "0.7"
 subtle = "0.7"
 curve25519-dalek = { version = "0.18", features = [ "serde" ] }
 ed25519-dalek = { version = "0.7", features = [ "serde" ] }
+sarkara = { path = "../../../crypto/sarkara", features = [ "serde" ] }
 
 generic-array = "0.9"
 colm = "0.1"

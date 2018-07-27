@@ -1,5 +1,6 @@
 pub mod ed25519;
 pub mod ristrettodh;
+#[cfg(feature = "pqc")] pub mod kyber;
 
 use crate::format::Short;
 use crate::define::{ Signature, KeyExchange };

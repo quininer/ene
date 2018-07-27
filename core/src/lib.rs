@@ -17,6 +17,9 @@ extern crate serde_bytes;
 extern crate semver;
 extern crate siphasher;
 
+#[cfg(feature = "pqc")]
+extern crate sarkara;
+
 #[macro_use] mod common;
 pub mod define;
 pub mod proto;
