@@ -20,7 +20,7 @@ digest = "0.7"
 subtle = "0.7"
 curve25519-dalek = { version = "0.18", features = [ "serde" ] }
 ed25519-dalek = { version = "0.7", features = [ "serde" ] }
-sarkara = { path = "../../../crypto/sarkara", features = [ "serde" ] }
+sarkara = { git = "https://github.com/quininer/sarkara", features = [ "serde" ] }
 
 generic-array = "0.9"
 colm = "0.1"

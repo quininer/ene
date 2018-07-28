@@ -14,7 +14,7 @@ use crate::common::Cbor;
 
 
 #[test]
-fn test_ooake_dh_aes128colm0() {
+fn test_ooake_dhaes128colm0() {
     let mut rng = thread_rng();
 
     let alice = "alice@core.ene";
@@ -44,7 +44,7 @@ fn test_ooake_dh_aes128colm0() {
 }
 
 #[test]
-fn test_sigae_aes128colm0() {
+fn test_sigae_ed25519dhaes128colm0() {
     let mut rng = thread_rng();
 
     let alice = "alice@core.ene";
