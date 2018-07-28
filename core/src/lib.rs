@@ -63,7 +63,7 @@ impl Default for Builder {
     fn default() -> Self {
         Builder {
             ed25519: true, ristrettodh: true,
-            #[cfg(feature = "pqc")] kyber: true
+            #[cfg(feature = "pqc")] kyber: false
         }
     }
 }
@@ -74,6 +74,14 @@ impl Builder {
             ed25519: false, ristrettodh: false,
             #[cfg(feature = "pqc")] kyber: false
         }
+    }
+
+    pub fn all() -> Self {
+        Builder {
+            ed25519: true, ristrettodh: true,
+            #[cfg(feature = "pqc")] kyber: true
+        }
+
     }
 
     pub fn generate<RNG: Rng + CryptoRng>(&self, id: &str, rng: &mut RNG) -> Ene {
