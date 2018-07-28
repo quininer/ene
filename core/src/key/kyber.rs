@@ -1,7 +1,4 @@
-use std::fmt;
 use rand::{ Rng, CryptoRng };
-use serde::{ Serialize, Serializer, Deserialize, Deserializer };
-use serde::de::{ self, Visitor };
 use sarkara::kex::{ CheckedExchange, KeyExchange as KeyExchange2, kyber };
 use sarkara::Packing as _;
 use crate::define::{ Packing, KeyExchange };
@@ -10,8 +7,11 @@ use crate::error::ProtoError;
 
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey(pub(crate) kyber::PrivateKey, pub(crate) kyber::PublicKey);
+
+#[derive(Eq, PartialEq)]
 #[derive(Serialize, Deserialize)]
 pub struct PublicKey(pub(crate) kyber::PublicKey);
+
 #[derive(Serialize, Deserialize)]
 pub struct Message(pub(crate) kyber::Message);
 
@@ -52,3 +52,28 @@ macro_rules! packing {
 
 packing!(PublicKey);
 packing!(Message);
+
+pub struct Kyber;
+
+impl KeyExchange for Kyber {
+    type PrivateKey = SecretKey;
+    type PublicKey = PublicKey;
+    type Message = Message;
+
+    const NAME: &'static str = "Kyber";
+    const SHARED_LENGTH: usize = kyber::Kyber::SHARED_LENGTH;
+
+    fn exchange_to<R: Rng + CryptoRng>(r: &mut R, sharedkey: &mut [u8], PublicKey(pk): &Self::PublicKey) -> Result<Self::Message, ProtoError> {
+        let m = kyber::Kyber::exchange_to(r, sharedkey, pk);
+
+        Ok(Message(m))
+    }
+
+    fn exchange_from(sharedkey: &mut [u8], SecretKey(sk, _): &Self::PrivateKey, Message(m): &Self::Message) -> Result<(), ProtoError> {
+        <kyber::Kyber as CheckedExchange>::exchange_from(sharedkey, sk, m)
+            .map_err(|err| match err {
+                sarkara::Error::VerificationFailed => ProtoError::VerificationFailed("Kyber"),
+                _ => unreachable!()
+            })
+    }
+}

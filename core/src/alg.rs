@@ -1,7 +1,11 @@
 use std::str::FromStr;
+use crate::key;
 use crate::error::ParseError;
 use crate::define::AeadCipher;
 use crate::aead::aes128colm0::Aes128Colm0;
+
+#[cfg(feature = "pqc")]
+use crate::aead::norx_mrs::NorxMRS;
 
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -27,7 +31,8 @@ pub enum Signature {
 #[derive(Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum KeyExchange {
-    RistrettoDH
+    RistrettoDH,
+    #[cfg(feature = "pqc")] Kyber
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -35,7 +40,8 @@ pub enum KeyExchange {
 #[derive(Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Encrypt {
-    Aes128Colm0
+    Aes128Colm0,
+    #[cfg(feature = "pqc")] NorxMRS
 }
 
 impl Protocol {
@@ -52,18 +58,25 @@ impl Signature {
 
 impl KeyExchange {
     pub const fn names() -> &'static [&'static str] {
-        &["ristrettodh"]
+        &[
+            "ristrettodh",
+            #[cfg(feature = "pqc")] "kyber"
+        ]
     }
 }
 
 impl Encrypt {
     pub const fn names() -> &'static [&'static str] {
-        &["aes128colm0"]
+        &[
+            "aes128colm0",
+            #[cfg(feature = "pqc")] "norxmrs"
+        ]
     }
 
     pub fn take(&self) -> &'static dyn AeadCipher {
         match self {
-            Encrypt::Aes128Colm0 => &Aes128Colm0
+            Encrypt::Aes128Colm0 => &Aes128Colm0,
+            #[cfg(feature = "pqc")] Encrypt::NorxMRS => &NorxMRS
         }
     }
 }
@@ -118,6 +131,7 @@ impl FromStr for KeyExchange {
         let s = s.to_lowercase();
         match s.as_str() {
             "ristrettodh" => Ok(KeyExchange::RistrettoDH),
+            #[cfg(feature = "pqc")] "kyber" => Ok(KeyExchange::Kyber),
             _ => Err(ParseError::Unknown(s.into()))
         }
     }
@@ -130,7 +144,101 @@ impl FromStr for Encrypt {
         let s = s.to_lowercase();
         match s.as_str() {
             "aes128colm0" => Ok(Encrypt::Aes128Colm0),
+            #[cfg(feature = "pqc")] "norxmrs" => Ok(Encrypt::NorxMRS),
             _ => Err(ParseError::Unknown(s.into()))
+        }
+    }
+}
+
+impl Protocol {
+    #[allow(unreachable_patterns)]
+    pub fn loss(&self, send: &key::SecretKey, recv: &key::PublicKey)
+        -> Result<(key::PublicKey, Option<key::ShortPublicKey>), ParseError>
+    {
+        use crate::define::{ Signature as _, KeyExchange as _ };
+        use crate::format::Short;
+        use crate::key::{
+            ed25519::{ self, Ed25519 },
+            ristrettodh::{ self, RistrettoDH }
+        };
+        #[cfg(feature = "pqc")]
+        use crate::key::kyber::{ self, Kyber };
+
+        macro_rules! try_unwrap {
+            ( $k:expr ; $alg:expr ) => {
+                match $k {
+                    Some(k) => k,
+                    None => return Err(crate::error::ParseError::NotAvailable($alg.into()))
+                }
+            }
+        }
+
+        match self {
+            Protocol::Sonly(Signature::Ed25519) => {
+                let sig_sk = try_unwrap!(&send.ed25519; Ed25519::NAME);
+                let sig_pk = ed25519::PublicKey::from_secret(sig_sk);
+
+                let smap = key::PublicKey {
+                    ed25519: Some(sig_pk),
+                    ..Default::default()
+                };
+
+                Ok((smap, None))
+            },
+            Protocol::Ooake(KeyExchange::RistrettoDH, _) => {
+                let ska = try_unwrap!(&send.ristrettodh; RistrettoDH::NAME);
+                let pka = ristrettodh::PublicKey::from_secret(ska);
+                let pkb = try_unwrap!(&recv.ristrettodh; RistrettoDH::NAME);
+
+                let smap = key::PublicKey {
+                    ristrettodh: Some(pka),
+                    ..Default::default()
+                };
+                let rmap = key::ShortPublicKey {
+                    ristrettodh: Some(Short::from(pkb)),
+                    ..Default::default()
+                };
+
+                Ok((smap, Some(rmap)))
+            },
+            Protocol::Ooake(..) => {
+                Err(ParseError::NotAvailable("RistrettoDH Only".into()))
+            },
+            Protocol::Sigae(_, sig, kex, _) => {
+                let mut smap = key::PublicKey::default();
+                let mut rmap = key::ShortPublicKey::default();
+
+                match sig {
+                    Signature::Ed25519 => {
+                        let sk = try_unwrap!(&send.ed25519; Ed25519::NAME);
+                        let pk = ed25519::PublicKey::from_secret(sk);
+
+                        smap.ed25519 = Some(pk);
+                    }
+                }
+
+                match kex {
+                    KeyExchange::RistrettoDH => {
+                        let ska = try_unwrap!(&send.ristrettodh; RistrettoDH::NAME);
+                        let pka = ristrettodh::PublicKey::from_secret(ska);
+                        let pkb = try_unwrap!(&recv.ristrettodh; RistrettoDH::NAME);
+
+                        smap.ristrettodh = Some(pka);
+                        rmap.ristrettodh = Some(Short::from(pkb));
+                    },
+                    #[cfg(feature = "pqc")]
+                    KeyExchange::Kyber => {
+                        let ska = try_unwrap!(&send.kyber; Kyber::NAME);
+                        let pka = kyber::PublicKey::from_secret(ska);
+                        let pkb = try_unwrap!(&recv.kyber; Kyber::NAME);
+
+                        smap.kyber = Some(pka);
+                        rmap.kyber = Some(Short::from(pkb));
+                    }
+                }
+
+                Ok((smap, Some(rmap)))
+            }
         }
     }
 }
