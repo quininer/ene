@@ -2,6 +2,7 @@ pub mod ed25519;
 pub mod ristrettodh;
 #[cfg(feature = "post-quantum")] pub mod kyber;
 
+use std::fmt;
 use crate::format::Short;
 use crate::define::{ Signature, KeyExchange };
 use self::ed25519::Ed25519;
@@ -24,7 +25,7 @@ pub struct PublicKey {
     #[cfg(feature = "post-quantum")] pub kyber: Option<kyber::PublicKey>
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 #[derive(Serialize, Deserialize)]
 pub struct ShortPublicKey {
     pub ed25519: Option<Short>,
@@ -103,5 +104,27 @@ impl ShortPublicKey {
         check!(Kyber::NAME, self.kyber, pk.kyber);
 
         Ok(flag)
+    }
+}
+
+impl fmt::Debug for ShortPublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut f = f.debug_tuple("PublicKey");
+
+        if let Some(ed25519) = self.ed25519 {
+            f.field(&format_args!("{}({:?})", Ed25519::NAME, &ed25519));
+        }
+
+        if let Some(ristrettodh) = self.ristrettodh {
+            f.field(&format_args!("{}({:?})", RistrettoDH::NAME, &ristrettodh));
+        }
+
+        #[cfg(feature = "post-quantum")] {
+            if let Some(kyber) = self.kyber {
+                f.field(&format_args!("{}({:?})", Kyber::NAME, &kyber));
+            }
+        }
+
+        f.finish()
     }
 }

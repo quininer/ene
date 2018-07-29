@@ -14,7 +14,7 @@ use crate::opts::ColorChoice as ColorChoice2;
 macro_rules! check {
     ( is_file $path:expr ) => {
         if $path.is_file() {
-            return Err(err_msg(format!("File already exists: {}", $path.display())));
+            return Err(err_msg(format!("File already exists: {}", $path.canonicalize()?.display())));
         }
     };
 }
@@ -45,9 +45,9 @@ impl Termination for Exit<Error> {
             Err(err) => {
                 let _ = stdio.eprint(|stderr| -> io::Result<()> {
                     writeln!(stderr, "error:")?;
-                    writeln!(stderr, "{}", err)?;
+                    writeln!(stderr, "\t{}", err)?;
                     for cause in err.causes().skip(1) {
-                        writeln!(stderr, "{}", cause)?;
+                        writeln!(stderr, "\t{}", cause)?;
                     }
 
                     if is_backtrace() {
@@ -125,6 +125,7 @@ impl Stdio {
         }
     }
 
+    #[allow(dead_code)]
     pub fn good(&mut self, args: fmt::Arguments) -> io::Result<()> {
         self.stdout.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
         self.stdout.write_fmt(args)?;

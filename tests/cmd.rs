@@ -70,6 +70,7 @@ fn test_cmd() -> Result<(), Error> {
 
     // alice recvfrom bob
     let assert = Command::new(&bin)
+        .arg("-q")
         .arg("recvfrom")
         .arg("--profile").arg("./tests/common/alice.ene")
         .arg("--sender-pubkey").arg(tempdir.path().join("bob.pk.ene"))

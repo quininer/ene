@@ -10,7 +10,7 @@ use super::db::Db;
 
 
 impl RecvFrom {
-    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Result<(), Error> {
         // take encrypted message
         let aad = self.associated_data.unwrap_or_default();
         let message_packed: Message = cbor::from_reader(&mut File::open(&self.input)?)?;
@@ -79,9 +79,15 @@ impl RecvFrom {
         let message = sk.and(&sender_id, &sender_pk)
             .recvfrom::<Cbor>(&proto, aad.as_bytes(), &message_encrypted)?;
 
+        if !quiet {
+            stdio.info(format_args!("sender: {}", sender_id))?;
+            stdio.info(format_args!("recipient: {}", sk.get_id()))?;
+            stdio.info(format_args!(""))?;
+        }
+
         // output
         if let Some(path) = self.output {
-            fs::write(path, &message)?
+            fs::write(path, &message)?;
         } else {
             stdio.print(|stdout| stdout.lock().write_all(&message))?;
         }

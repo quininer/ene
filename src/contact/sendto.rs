@@ -9,7 +9,7 @@ use super::db::Db;
 
 
 impl SendTo {
-    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Result<(), Error> {
         // take receiver
         let (receiver_id, receiver_pk) = if let Some(ref pk_path) = self.recipient_pubkey {
             let pk_packed: PublicKey = cbor::from_reader(&mut File::open(pk_path)?)?;
@@ -18,7 +18,7 @@ impl SendTo {
             let db_path = dir.data_local_dir().join("sled");
             let db = Db::new(&db_path)?;
             let pk = db.get(&id)?
-                .ok_or_else(|| err_msg("not found"))?;
+                .ok_or_else(|| err_msg("ID does not exist."))?;
             (id, pk)
         } else {
             unreachable!()
@@ -46,7 +46,7 @@ impl SendTo {
             .sendto::<Cbor>(&protocol, aad.as_bytes(), &message)?;
 
         // output
-        let output = output.unwrap_or_else(||
+        let output = if output.is_dir() {
             if let Some(ext) = input.extension() {
                 let mut ext = ext.to_os_string();
                 ext.push(".ene");
@@ -54,9 +54,15 @@ impl SendTo {
             } else {
                 input.with_extension("ene")
             }
-        );
+        } else {
+            output
+        };
 
-        cbor::to_writer(&mut File::create(output)?, &message_packed)?;
+        cbor::to_writer(&mut File::create(&output)?, &message_packed)?;
+
+        if !quiet {
+            stdio.info(format_args!("Message is encrypted to {}", output.canonicalize()?.display()))?;
+        }
 
         Ok(())
     }

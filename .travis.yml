@@ -7,4 +7,4 @@ os:
 
 script:
     - cargo test --all
-    - cargo test --features pqc --all
+    - cargo test --features post-quantum --all

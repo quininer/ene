@@ -28,7 +28,7 @@ use crate::opts::{ Options, SubCommand };
 
 
 #[inline]
-fn start(subcommand: SubCommand, stdio: &mut Stdio) -> Result<(), Error> {
+fn start(quiet: bool, subcommand: SubCommand, stdio: &mut Stdio) -> Result<(), Error> {
     let dir = ProjectDirs::from("", "", "ENE")
         .ok_or_else(|| err_msg("not found project dir"))?;
 
@@ -37,10 +37,10 @@ fn start(subcommand: SubCommand, stdio: &mut Stdio) -> Result<(), Error> {
     }
 
     match subcommand {
-        SubCommand::Profile(profile) => profile.exec(&dir, stdio)?,
-        SubCommand::Contact(contact) => contact.exec(&dir, stdio)?,
-        SubCommand::SendTo(sendto) => sendto.exec(&dir, stdio)?,
-        SubCommand::RecvFrom(recvfrom) => recvfrom.exec(&dir, stdio)?
+        SubCommand::Profile(profile) => profile.exec(&dir, quiet, stdio)?,
+        SubCommand::Contact(contact) => contact.exec(&dir, quiet, stdio)?,
+        SubCommand::SendTo(sendto) => sendto.exec(&dir, quiet, stdio)?,
+        SubCommand::RecvFrom(recvfrom) => recvfrom.exec(&dir, quiet, stdio)?
     }
 
     Ok(())
@@ -49,6 +49,6 @@ fn start(subcommand: SubCommand, stdio: &mut Stdio) -> Result<(), Error> {
 fn main() -> Exit<Error> {
     let options = Options::from_args();
     let mut stdio = Stdio::new(options.color.into());
-    let result = start(options.subcommand, &mut stdio);
+    let result = start(options.quiet, options.subcommand, &mut stdio);
     Exit(result, stdio)
 }

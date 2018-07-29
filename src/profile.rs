@@ -14,7 +14,7 @@ use crate::common::{ Stdio, askpass };
 
 
 impl Profile {
-    pub fn exec(self, dir: &ProjectDirs, stdio: &mut Stdio) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Result<(), Error> {
         let mut sk_path = dir.data_local_dir().join("key.ene");
 
         if self.init {
@@ -25,7 +25,7 @@ impl Profile {
             check!(is_file sk_path);
 
             init(
-                stdio,
+                quiet, stdio,
                 &self.id.unwrap(),
                 self.choose_pubkey.as_ref().map(String::as_str),
                 self.choose_encrypt.unwrap_or(alg::Encrypt::Aes128Colm0),
@@ -34,6 +34,10 @@ impl Profile {
         } else if let Some(path) = self.import {
             check!(is_file sk_path);
             fs::copy(path, sk_path)?;
+
+            if !quiet {
+                stdio.info(format_args!("import successfully!"))?;
+            }
         } else if let Some(mut path) = self.export_pubkey {
             if let Some(path) = self.profile {
                 sk_path = path;
@@ -50,6 +54,13 @@ impl Profile {
             let pk = sk.as_secret().to_public();
             let pk_packed: PublicKey = Envelope::from((id.to_owned(), pk));
             cbor::to_writer(&mut File::create(&path)?, &pk_packed)?;
+
+            if !quiet {
+                stdio.info(format_args!(
+                    "PublicKey has been exported to {}",
+                    path.canonicalize()?.display()
+                ))?;
+            }
         } else if let Some(mut path) = self.export_privkey {
             if path.is_dir() {
                 let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
@@ -59,17 +70,24 @@ impl Profile {
             }
 
             check!(is_file path);
-            fs::copy(sk_path, path)?;
+            fs::copy(sk_path, &path)?;
+
+            if !quiet {
+                stdio.info(format_args!(
+                    "PrivateKey has been exported to {}",
+                    path.canonicalize()?.display()
+                ))?;
+            }
         } else {
             unreachable!()
         }
 
-        stdio.info(format_args!("Done!"))?;
         Ok(())
     }
 }
 
 pub fn init(
+    quiet: bool,
     stdio: &mut Stdio,
     id: &str,
     algorithms: Option<&str>, enc: alg::Encrypt,
@@ -84,6 +102,13 @@ pub fn init(
     let mut rng = OsRng::new()?;
     let ene = builder.generate(id, &mut rng);
     let sk_packed = askpass(|pass| seal(&mut rng, enc, id, pass.as_bytes(), ene.as_secret()))?;
+
+    if !quiet {
+        stdio.info(format_args!(
+            "Profile successfully initialized\n\nuid: {}\npub: {:#?}",
+            ene.get_id(), ene.as_secret().to_public().to_short()
+        ))?;
+    }
 
     let mut sk_file = File::create(output)?;
     cbor::to_writer(&mut sk_file, &sk_packed)?;

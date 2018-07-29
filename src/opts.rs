@@ -3,7 +3,6 @@ use structopt::clap::ArgGroup;
 use crate::core::alg::{ self, Protocol };
 
 
-
 #[derive(Debug, StructOpt)]
 #[structopt(name = "ene")]
 #[structopt(raw(long_about = "about()"))]
@@ -16,7 +15,11 @@ pub struct Options {
         short = "c", long = "color", value_name = "MODE",
         raw(possible_values = "&ColorChoice::variants()"), default_value = "Auto"
     )]
-    pub color: ColorChoice
+    pub color: ColorChoice,
+
+    /// Try to be as quiet as possible
+    #[structopt(short = "q", long = "quiet")]
+    pub quiet: bool
 }
 
 arg_enum! {
@@ -162,7 +165,7 @@ pub struct SendTo {
         short = "o", long = "output", value_name = "PATH",
         parse(from_os_str)
     )]
-    pub output: Option<PathBuf>,
+    pub output: PathBuf,
 
     /// Specifies encryption protocol
     #[structopt(

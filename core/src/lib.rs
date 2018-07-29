@@ -134,7 +134,9 @@ impl Ene {
 }
 
 impl<'a> And<'a> {
-    pub fn sendto<SER: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Message, error::Error<SER::Error>> {
+    pub fn sendto<SER: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8])
+        -> Result<Message, error::Error<SER::Error>>
+    {
         use crate::format::{ Meta, Envelope };
 
         let And {
@@ -193,7 +195,8 @@ impl<'a> And<'a> {
                 let msg = (msg, ByteBuf::from(c));
                 ByteBuf::from(SER::to_vec(&msg)?)
             },
-            #[cfg(feature = "post-quantum")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
+            #[cfg(feature = "post-quantum")]
+            Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
                 let aead = enc.take();
 
                 let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
@@ -216,7 +219,9 @@ impl<'a> And<'a> {
         Ok(Envelope::from((meta, proto.clone(), msg)))
     }
 
-    pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Vec<u8>, error::Error<DE::Error>> {
+    pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8])
+        -> Result<Vec<u8>, error::Error<DE::Error>>
+    {
         let And {
             ene: Ene { id: idb, key: skb },
             target: (ida, pka)
@@ -248,9 +253,8 @@ impl<'a> And<'a> {
                 )
                     .map_err(Into::into)
             },
-            #[cfg(feature = "post-quantum")] Protocol::Ooake(alg::KeyExchange::Kyber, _) => {
-                Err(ParseError::NotAvailable("Kyber".into()).into())
-            }
+            #[cfg(feature = "post-quantum")] Protocol::Ooake(alg::KeyExchange::Kyber, _)
+                => return Err(ParseError::NotAvailable("Kyber".into()).into()),
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = enc.take();
 
@@ -269,8 +273,9 @@ impl<'a> And<'a> {
                     flag
                 )
                     .map_err(Into::into)
-            }
-            #[cfg(feature = "post-quantum")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
+            },
+            #[cfg(feature = "post-quantum")]
+            Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
                 let aead = enc.take();
 
                 let (msg, c): (sigae::Message<Kyber>, Bytes) = DE::from_slice(message)?;
