@@ -1,4 +1,4 @@
-#![cfg(feature = "pqc")]
+#![cfg(feature = "post-quantum")]
 
 #[macro_use] extern crate serde_derive;
 extern crate rand;
@@ -24,7 +24,7 @@ fn test_cmd() -> Result<(), Error> {
     env::set_var("ENE_ASKPASS", askpass);
 
     let tempdir = TempDir::new()?;
-    let bin = common::main(&["--features", "pqc"])?;
+    let bin = common::main(&["--features", "post-quantum"])?;
 
     // bob generate privkey
     Command::new(&bin)

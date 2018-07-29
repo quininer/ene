@@ -4,7 +4,7 @@ use crate::error::ParseError;
 use crate::define::AeadCipher;
 use crate::aead::aes128colm0::Aes128Colm0;
 
-#[cfg(feature = "pqc")]
+#[cfg(feature = "post-quantum")]
 use crate::aead::norx_mrs::NorxMRS;
 
 
@@ -32,7 +32,7 @@ pub enum Signature {
 #[non_exhaustive]
 pub enum KeyExchange {
     RistrettoDH,
-    #[cfg(feature = "pqc")] Kyber
+    #[cfg(feature = "post-quantum")] Kyber
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -41,7 +41,7 @@ pub enum KeyExchange {
 #[non_exhaustive]
 pub enum Encrypt {
     Aes128Colm0,
-    #[cfg(feature = "pqc")] NorxMRS
+    #[cfg(feature = "post-quantum")] NorxMRS
 }
 
 impl Protocol {
@@ -60,7 +60,7 @@ impl KeyExchange {
     pub const fn names() -> &'static [&'static str] {
         &[
             "ristrettodh",
-            #[cfg(feature = "pqc")] "kyber"
+            #[cfg(feature = "post-quantum")] "kyber"
         ]
     }
 }
@@ -69,14 +69,14 @@ impl Encrypt {
     pub const fn names() -> &'static [&'static str] {
         &[
             "aes128colm0",
-            #[cfg(feature = "pqc")] "norxmrs"
+            #[cfg(feature = "post-quantum")] "norxmrs"
         ]
     }
 
     pub fn take(&self) -> &'static dyn AeadCipher {
         match self {
             Encrypt::Aes128Colm0 => &Aes128Colm0,
-            #[cfg(feature = "pqc")] Encrypt::NorxMRS => &NorxMRS
+            #[cfg(feature = "post-quantum")] Encrypt::NorxMRS => &NorxMRS
         }
     }
 }
@@ -131,7 +131,7 @@ impl FromStr for KeyExchange {
         let s = s.to_lowercase();
         match s.as_str() {
             "ristrettodh" => Ok(KeyExchange::RistrettoDH),
-            #[cfg(feature = "pqc")] "kyber" => Ok(KeyExchange::Kyber),
+            #[cfg(feature = "post-quantum")] "kyber" => Ok(KeyExchange::Kyber),
             _ => Err(ParseError::Unknown(s.into()))
         }
     }
@@ -144,7 +144,7 @@ impl FromStr for Encrypt {
         let s = s.to_lowercase();
         match s.as_str() {
             "aes128colm0" => Ok(Encrypt::Aes128Colm0),
-            #[cfg(feature = "pqc")] "norxmrs" => Ok(Encrypt::NorxMRS),
+            #[cfg(feature = "post-quantum")] "norxmrs" => Ok(Encrypt::NorxMRS),
             _ => Err(ParseError::Unknown(s.into()))
         }
     }
@@ -161,7 +161,7 @@ impl Protocol {
             ed25519::{ self, Ed25519 },
             ristrettodh::{ self, RistrettoDH }
         };
-        #[cfg(feature = "pqc")]
+        #[cfg(feature = "post-quantum")]
         use crate::key::kyber::{ self, Kyber };
 
         macro_rules! try_unwrap {
@@ -226,7 +226,7 @@ impl Protocol {
                         smap.ristrettodh = Some(pka);
                         rmap.ristrettodh = Some(Short::from(pkb));
                     },
-                    #[cfg(feature = "pqc")]
+                    #[cfg(feature = "post-quantum")]
                     KeyExchange::Kyber => {
                         let ska = try_unwrap!(&send.kyber; Kyber::NAME);
                         let pka = kyber::PublicKey::from_secret(ska);

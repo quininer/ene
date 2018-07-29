@@ -12,7 +12,7 @@ edition = "2018"
 members = [ "core" ]
 
 [features]
-pqc = [ "ene-core/pqc" ]
+post-quantum = [ "ene-core/post-quantum" ]
 
 [dependencies]
 ene-core = { path = "./core" }

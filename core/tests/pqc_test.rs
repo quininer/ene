@@ -1,4 +1,4 @@
-#![cfg(feature = "pqc")]
+#![cfg(feature = "post-quantum")]
 
 extern crate rand;
 extern crate serde;

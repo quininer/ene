@@ -17,7 +17,7 @@ extern crate serde_bytes;
 extern crate semver;
 extern crate siphasher;
 
-#[cfg(feature = "pqc")]
+#[cfg(feature = "post-quantum")]
 extern crate sarkara;
 
 #[macro_use] mod common;
@@ -40,7 +40,7 @@ use crate::key::ed25519::{ self, Ed25519 };
 use crate::key::ristrettodh::{ self, RistrettoDH };
 use crate::define::{ Signature, KeyExchange, Serde };
 
-#[cfg(feature = "pqc")] use crate::key::kyber::{ self, Kyber };
+#[cfg(feature = "post-quantum")] use crate::key::kyber::{ self, Kyber };
 
 
 pub struct Ene {
@@ -51,7 +51,7 @@ pub struct Ene {
 pub struct Builder {
     pub ed25519: bool,
     pub ristrettodh: bool,
-    #[cfg(feature = "pqc")] pub kyber: bool
+    #[cfg(feature = "post-quantum")] pub kyber: bool
 }
 
 pub struct And<'a> {
@@ -63,7 +63,7 @@ impl Default for Builder {
     fn default() -> Self {
         Builder {
             ed25519: true, ristrettodh: true,
-            #[cfg(feature = "pqc")] kyber: false
+            #[cfg(feature = "post-quantum")] kyber: false
         }
     }
 }
@@ -72,14 +72,14 @@ impl Builder {
     pub fn empty() -> Self {
         Builder {
             ed25519: false, ristrettodh: false,
-            #[cfg(feature = "pqc")] kyber: false
+            #[cfg(feature = "post-quantum")] kyber: false
         }
     }
 
     pub fn all() -> Self {
         Builder {
             ed25519: true, ristrettodh: true,
-            #[cfg(feature = "pqc")] kyber: true
+            #[cfg(feature = "post-quantum")] kyber: true
         }
 
     }
@@ -92,7 +92,7 @@ impl Builder {
             if self.ristrettodh { Some(ristrettodh::SecretKey::generate(rng)) }
             else { None };
 
-        #[cfg(feature = "pqc")]
+        #[cfg(feature = "post-quantum")]
         let kyber_sk =
             if self.kyber { Some(kyber::SecretKey::generate(rng)) }
             else { None };
@@ -102,7 +102,7 @@ impl Builder {
             key: key::SecretKey {
                 ed25519: ed25519_sk,
                 ristrettodh: ristrettodh_sk,
-                #[cfg(feature = "pqc")] kyber: kyber_sk
+                #[cfg(feature = "post-quantum")] kyber: kyber_sk
             }
         }
     }
@@ -173,7 +173,7 @@ impl<'a> And<'a> {
                 let msg = (msg, ByteBuf::from(c));
                 ByteBuf::from(SER::to_vec(&msg)?)
             },
-            #[cfg(feature = "pqc")] Protocol::Ooake(alg::KeyExchange::Kyber, _)
+            #[cfg(feature = "post-quantum")] Protocol::Ooake(alg::KeyExchange::Kyber, _)
                 => return Err(ParseError::NotAvailable("RistrettoDH Only".into()).into()),
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = enc.take();
@@ -193,7 +193,7 @@ impl<'a> And<'a> {
                 let msg = (msg, ByteBuf::from(c));
                 ByteBuf::from(SER::to_vec(&msg)?)
             },
-            #[cfg(feature = "pqc")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
+            #[cfg(feature = "post-quantum")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
                 let aead = enc.take();
 
                 let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
@@ -248,7 +248,7 @@ impl<'a> And<'a> {
                 )
                     .map_err(Into::into)
             },
-            #[cfg(feature = "pqc")] Protocol::Ooake(alg::KeyExchange::Kyber, _) => {
+            #[cfg(feature = "post-quantum")] Protocol::Ooake(alg::KeyExchange::Kyber, _) => {
                 Err(ParseError::NotAvailable("Kyber".into()).into())
             }
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
@@ -270,7 +270,7 @@ impl<'a> And<'a> {
                 )
                     .map_err(Into::into)
             }
-            #[cfg(feature = "pqc")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
+            #[cfg(feature = "post-quantum")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
                 let aead = enc.take();
 
                 let (msg, c): (sigae::Message<Kyber>, Bytes) = DE::from_slice(message)?;
@@ -303,7 +303,7 @@ impl FromStr for Builder {
             match a.trim().to_lowercase().as_str() {
                 "ed25519" => builder.ed25519 = true,
                 "ristrettodh" => builder.ristrettodh = true,
-                #[cfg(feature = "pqc")] "kyber" => builder.kyber = true,
+                #[cfg(feature = "post-quantum")] "kyber" => builder.kyber = true,
                 a => return Err(ParseError::Unknown(a.to_string().into()))
             }
         }
