@@ -56,6 +56,12 @@ impl<E> From<ProtoError> for Error<E> {
     }
 }
 
+impl<E> From<ParseError> for Error<E> {
+    fn from(err: ParseError) -> Error<E> {
+        Error::Parse(err)
+    }
+}
+
 impl From<ed25519_dalek::SignatureError> for ProtoError {
     fn from(err: ed25519_dalek::SignatureError) -> ProtoError {
         ProtoError::Ed25519(err)

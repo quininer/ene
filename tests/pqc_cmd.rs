@@ -1,3 +1,5 @@
+#![cfg(feature = "post-quantum")]
+
 #[macro_use] extern crate serde_derive;
 extern crate rand;
 extern crate failure;
@@ -17,27 +19,18 @@ use assert_cmd::prelude::*;
 
 
 #[test]
-fn test_askpass() -> Result<(), Error> {
-    Command::cargo_example("dummy_askpass")?
-        .assert()
-        .success()
-        .stdout("password");
-
-    Ok(())
-}
-
-#[test]
 fn test_cmd() -> Result<(), Error> {
     let askpass = common::example("dummy_askpass")?;
     env::set_var("ENE_ASKPASS", askpass);
 
     let tempdir = TempDir::new()?;
-    let bin = common::main(&[])?;
+    let bin = common::main(&["--features", "post-quantum"])?;
 
     // bob generate privkey
     Command::new(&bin)
         .arg("profile")
         .arg("bob@core.ene").arg("--init")
+        .arg("--choose-pubkey").arg("ed25519,kyber")
         .arg("--profile").arg(tempdir.path().join("bob.ene"))
         .assert()
         .success();
@@ -61,6 +54,7 @@ fn test_cmd() -> Result<(), Error> {
     Command::new(&bin)
         .arg("sendto")
         .arg("--profile").arg(tempdir.path().join("bob.ene"))
+        .arg("--protocol").arg("sigae+-ed25519-kyber-norxmrs")
         .arg("--recipient-pubkey").arg("./tests/common/alice.pk.ene")
         .arg("--associated-data").arg(title)
         .arg("--input").arg(tempdir.path().join("plaintext.txt"))

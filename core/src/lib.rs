@@ -17,6 +17,9 @@ extern crate serde_bytes;
 extern crate semver;
 extern crate siphasher;
 
+#[cfg(feature = "post-quantum")]
+extern crate sarkara;
+
 #[macro_use] mod common;
 pub mod define;
 pub mod proto;
@@ -37,6 +40,8 @@ use crate::key::ed25519::{ self, Ed25519 };
 use crate::key::ristrettodh::{ self, RistrettoDH };
 use crate::define::{ Signature, KeyExchange, Serde };
 
+#[cfg(feature = "post-quantum")] use crate::key::kyber::{ self, Kyber };
+
 
 pub struct Ene {
     id: String,
@@ -45,7 +50,8 @@ pub struct Ene {
 
 pub struct Builder {
     pub ed25519: bool,
-    pub ristrettodh: bool
+    pub ristrettodh: bool,
+    #[cfg(feature = "post-quantum")] pub kyber: bool
 }
 
 pub struct And<'a> {
@@ -56,8 +62,8 @@ pub struct And<'a> {
 impl Default for Builder {
     fn default() -> Self {
         Builder {
-            ed25519: true,
-            ristrettodh: true
+            ed25519: true, ristrettodh: true,
+            #[cfg(feature = "post-quantum")] kyber: false
         }
     }
 }
@@ -65,9 +71,17 @@ impl Default for Builder {
 impl Builder {
     pub fn empty() -> Self {
         Builder {
-            ed25519: false,
-            ristrettodh: false
+            ed25519: false, ristrettodh: false,
+            #[cfg(feature = "post-quantum")] kyber: false
         }
+    }
+
+    pub fn all() -> Self {
+        Builder {
+            ed25519: true, ristrettodh: true,
+            #[cfg(feature = "post-quantum")] kyber: true
+        }
+
     }
 
     pub fn generate<RNG: Rng + CryptoRng>(&self, id: &str, rng: &mut RNG) -> Ene {
@@ -78,11 +92,17 @@ impl Builder {
             if self.ristrettodh { Some(ristrettodh::SecretKey::generate(rng)) }
             else { None };
 
+        #[cfg(feature = "post-quantum")]
+        let kyber_sk =
+            if self.kyber { Some(kyber::SecretKey::generate(rng)) }
+            else { None };
+
         Ene {
             id: id.to_string(),
             key: key::SecretKey {
                 ed25519: ed25519_sk,
-                ristrettodh: ristrettodh_sk
+                ristrettodh: ristrettodh_sk,
+                #[cfg(feature = "post-quantum")] kyber: kyber_sk
             }
         }
     }
@@ -115,7 +135,7 @@ impl Ene {
 
 impl<'a> And<'a> {
     pub fn sendto<SER: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Message, error::Error<SER::Error>> {
-        use crate::format::{ Meta, Short, Envelope };
+        use crate::format::{ Meta, Envelope };
 
         let And {
             ene: Ene { id: ida, key: ska },
@@ -124,41 +144,23 @@ impl<'a> And<'a> {
 
         let mut rng = OsRng::new()?;
 
-        match *proto {
+        let (smap, rmap) = proto.loss(ska, pkb)?;
+        let meta = Meta {
+            s: (ida.to_string(), smap),
+            r: rmap.map(|rmap| (idb.to_string(), rmap))
+        };
+
+        let msg = match *proto {
             Protocol::Sonly(alg::Signature::Ed25519) => {
                 let sig_sk = try_unwrap!(&ska.ed25519; Ed25519::NAME);
-                let sig_pk = ed25519::PublicKey::from_secret(sig_sk);
-
                 let msg = sonly::send::<Ed25519>((ida, sig_sk), aad, message);
-                let msg = ByteBuf::from(SER::to_vec(&msg)?);
-
-                let smap = key::PublicKey {
-                    ed25519: Some(sig_pk),
-                    ..Default::default()
-                };
-
-                let meta = Meta {
-                    s: (ida.to_string(), smap),
-                    r: None
-                };
-
-                Ok(Envelope::from((meta, proto.clone(), msg)))
+                ByteBuf::from(SER::to_vec(&msg)?)
             },
             Protocol::Ooake(alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = enc.take();
 
                 let ska = try_unwrap!(&ska.ristrettodh; RistrettoDH::NAME);
-                let pka = ristrettodh::PublicKey::from_secret(ska);
                 let pkb = try_unwrap!(&pkb.ristrettodh; RistrettoDH::NAME);
-
-                let smap = key::PublicKey {
-                    ristrettodh: Some(pka),
-                    ..Default::default()
-                };
-                let rmap = key::ShortPublicKey {
-                    ristrettodh: Some(Short::from(pkb)),
-                    ..Default::default()
-                };
 
                 let (msg, c) = ooake::send(
                     &mut rng,
@@ -169,30 +171,15 @@ impl<'a> And<'a> {
                     message
                 )?;
                 let msg = (msg, ByteBuf::from(c));
-                let msg = ByteBuf::from(SER::to_vec(&msg)?);
-
-                let meta = Meta {
-                    s: (ida.to_string(), smap),
-                    r: Some((idb.to_string(), rmap))
-                };
-
-                Ok(Envelope::from((meta, proto.clone(), msg)))
+                ByteBuf::from(SER::to_vec(&msg)?)
             },
+            #[cfg(feature = "post-quantum")] Protocol::Ooake(alg::KeyExchange::Kyber, _)
+                => return Err(ParseError::NotAvailable("RistrettoDH Only".into()).into()),
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = enc.take();
 
                 let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
-                let sigpk_a = ed25519::PublicKey::from_secret(sigsk_a);
                 let dhpk_b = try_unwrap!(&pkb.ristrettodh; RistrettoDH::NAME);
-
-                let smap = key::PublicKey {
-                    ed25519: Some(sigpk_a),
-                    ..Default::default()
-                };
-                let rmap = key::ShortPublicKey {
-                    ristrettodh: Some(Short::from(dhpk_b)),
-                    ..Default::default()
-                };
 
                 let (msg, c) = sigae::send::<_, Ed25519, RistrettoDH>(
                     &mut rng,
@@ -204,16 +191,29 @@ impl<'a> And<'a> {
                     flag
                 )?;
                 let msg = (msg, ByteBuf::from(c));
-                let msg = ByteBuf::from(SER::to_vec(&msg)?);
+                ByteBuf::from(SER::to_vec(&msg)?)
+            },
+            #[cfg(feature = "post-quantum")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
+                let aead = enc.take();
 
-                let meta = Meta {
-                    s: (ida.to_string(), smap),
-                    r: Some((idb.to_string(), rmap))
-                };
+                let sigsk_a = try_unwrap!(&ska.ed25519; Ed25519::NAME);
+                let dhpk_b = try_unwrap!(&pkb.kyber; Kyber::NAME);
 
-                Ok(Envelope::from((meta, proto.clone(), msg)))
+                let (msg, c) = sigae::send::<_, Ed25519, Kyber>(
+                    &mut rng,
+                    aead,
+                    (ida, sigsk_a),
+                    (idb, dhpk_b),
+                    aad,
+                    message,
+                    flag
+                )?;
+                let msg = (msg, ByteBuf::from(c));
+                ByteBuf::from(SER::to_vec(&msg)?)
             }
-        }
+        };
+
+        Ok(Envelope::from((meta, proto.clone(), msg)))
     }
 
     pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8]) -> Result<Vec<u8>, error::Error<DE::Error>> {
@@ -248,6 +248,9 @@ impl<'a> And<'a> {
                 )
                     .map_err(Into::into)
             },
+            #[cfg(feature = "post-quantum")] Protocol::Ooake(alg::KeyExchange::Kyber, _) => {
+                Err(ParseError::NotAvailable("Kyber".into()).into())
+            }
             Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::RistrettoDH, enc) => {
                 let aead = enc.take();
 
@@ -257,6 +260,25 @@ impl<'a> And<'a> {
                 let dhpk_b = ristrettodh::PublicKey::from_secret(dhsk_b);
                 let sigpk_a = try_unwrap!(&pka.ed25519; Ed25519::NAME);
                 sigae::recv::<Ed25519, RistrettoDH>(
+                    aead,
+                    (idb, dhsk_b, &dhpk_b),
+                    (ida, sigpk_a),
+                    &msg,
+                    aad,
+                    &c,
+                    flag
+                )
+                    .map_err(Into::into)
+            }
+            #[cfg(feature = "post-quantum")] Protocol::Sigae(flag, alg::Signature::Ed25519, alg::KeyExchange::Kyber, enc) => {
+                let aead = enc.take();
+
+                let (msg, c): (sigae::Message<Kyber>, Bytes) = DE::from_slice(message)?;
+
+                let dhsk_b = try_unwrap!(&skb.kyber; Kyber::NAME);
+                let dhpk_b = kyber::PublicKey::from_secret(dhsk_b);
+                let sigpk_a = try_unwrap!(&pka.ed25519; Ed25519::NAME);
+                sigae::recv::<Ed25519, Kyber>(
                     aead,
                     (idb, dhsk_b, &dhpk_b),
                     (ida, sigpk_a),
@@ -281,6 +303,7 @@ impl FromStr for Builder {
             match a.trim().to_lowercase().as_str() {
                 "ed25519" => builder.ed25519 = true,
                 "ristrettodh" => builder.ristrettodh = true,
+                #[cfg(feature = "post-quantum")] "kyber" => builder.kyber = true,
                 a => return Err(ParseError::Unknown(a.to_string().into()))
             }
         }

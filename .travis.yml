@@ -7,3 +7,4 @@ os:
 
 script:
     - cargo test --all
+    - cargo test --features pqc --all

@@ -11,6 +11,9 @@ edition = "2018"
 [workspace]
 members = [ "core" ]
 
+[features]
+post-quantum = [ "ene-core/post-quantum" ]
+
 [dependencies]
 ene-core = { path = "./core" }
 
@@ -31,5 +34,7 @@ ttyaskpass = { git = "https://github.com/quininer/ttyaskpass", branch = "mortal"
 sled = "0.15"
 
 [dev-dependencies]
+serde_derive = "1"
+escargot = "0.2"
 assert_fs = "0.3"
 assert_cmd = "0.6"
