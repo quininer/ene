@@ -1,3 +1,5 @@
+//! Algorithm
+
 use std::str::FromStr;
 use crate::key;
 use crate::error::ParseError;

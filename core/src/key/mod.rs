@@ -1,3 +1,5 @@
+//! PublicKey Cryptography implementation
+
 pub mod ed25519;
 pub mod ristrettodh;
 #[cfg(feature = "post-quantum")] pub mod kyber;
@@ -10,6 +12,7 @@ use self::ristrettodh::RistrettoDH;
 #[cfg(feature = "post-quantum")] use self::kyber::Kyber;
 
 
+/// SecretKey Set
 #[derive(Serialize, Deserialize)]
 pub struct SecretKey {
     pub ed25519: Option<ed25519::SecretKey>,
@@ -17,6 +20,7 @@ pub struct SecretKey {
     #[cfg(feature = "post-quantum")] pub kyber: Option<kyber::SecretKey>
 }
 
+/// PublicKey Set
 #[derive(Default)]
 #[derive(Serialize, Deserialize)]
 pub struct PublicKey {
@@ -25,6 +29,7 @@ pub struct PublicKey {
     #[cfg(feature = "post-quantum")] pub kyber: Option<kyber::PublicKey>
 }
 
+/// Short PublicKey Set
 #[derive(Default)]
 #[derive(Serialize, Deserialize)]
 pub struct ShortPublicKey {

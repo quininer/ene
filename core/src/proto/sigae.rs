@@ -8,6 +8,16 @@
 //!
 //! K = KX(x, B) = KX(b, X)
 //! ```
+//!
+//! ENE uses a AEAD variant of SIGMA. It uses AEAD instead of MAC to guarantee integrity.
+//! Please note that this is not a SIGMA-I protocol variant.
+//! Because it does not encrypt the IDs of both sides of the communication.
+//!
+//! In the Mail protocol, the IDs of both sides of the communication are usually public,
+//! so there is no need to keep it secret.
+//!
+//! * [SIGMA](http://webee.technion.ac.il/~hugo/sigma.html)
+//! * [Internet-Draft Ephemeral Diffie-Hellman Over COSE](https://tools.ietf.org/html/draft-selander-ace-cose-ecdhe-07#page-3)
 
 use rand::{ Rng, CryptoRng };
 use sha3::{ Sha3_512, Shake256 };

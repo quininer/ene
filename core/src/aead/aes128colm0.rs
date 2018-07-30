@@ -1,3 +1,7 @@
+//! AES128 + COLM0
+//!
+//! * [COLM v1](https://competitions.cr.yp.to/round3/colmv1.pdf)
+
 use generic_array::GenericArray;
 use aes::{ Aes128, block_cipher_trait::BlockCipher as _ };
 use colm::{ Colm, NONCE_LENGTH };

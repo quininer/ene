@@ -1,3 +1,5 @@
+//! Trait define
+
 use rand::{ Rng, CryptoRng };
 use serde::{ Serialize, Deserialize };
 use crate::error::{ self, ProtoError };
