@@ -123,7 +123,7 @@ pub struct Profile {
 #[derive(Debug, StructOpt)]
 pub struct Contact {
     /// List the specified contacts
-    #[structopt(long = "list", group = "contact")]
+    #[structopt(short = "l", long = "list", group = "contact")]
     pub list: bool,
 
     /// Contact ID
@@ -175,7 +175,7 @@ pub struct SendTo {
     pub protocol: Protocol,
 
     /// Associated Data
-    #[structopt(short = "A", long = "associated-data", value_name = "STRING")]
+    #[structopt(short = "a", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
     /// Profile path
@@ -187,7 +187,7 @@ pub struct SendTo {
 
     /// Contact PublicKey path
     #[structopt(
-        long = "recipient-pubkey",
+        short = "t", long = "recipient-pubkey",
         value_name = "PATH", group = "recipient",
         parse(from_os_str)
     )]
@@ -215,7 +215,7 @@ pub struct RecvFrom {
     pub output: Option<PathBuf>,
 
     /// Associated Data
-    #[structopt(short = "A", long = "associated-data", value_name = "STRING")]
+    #[structopt(short = "a", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
     /// Force decrypt
@@ -231,7 +231,7 @@ pub struct RecvFrom {
 
     /// Contact PublicKey path
     #[structopt(
-        long = "sender-pubkey",
+        short = "t", long = "sender-pubkey",
         value_name = "PATH", group = "sender",
         parse(from_os_str)
     )]
@@ -244,12 +244,12 @@ fn arg_group(name: &'static str) -> ArgGroup<'static> {
 
 /// TODO const?
 fn about() -> &'static str {
-    let about = format!(r#"
+    let about = format!("
 Supported algorithms:
 * Signature: {}
 * KeyExchange: {}
 * Encryption: {}
-"#,
+",
         alg::Signature::names().join(", "),
         alg::KeyExchange::names().join(", "),
         alg::Encrypt::names().join(", ")

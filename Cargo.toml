@@ -5,6 +5,7 @@ name = "ene"
 version = "0.1.0"
 authors = ["quininer <quininer@live.com>"]
 description = "An experimental end to end email encryption tool"
+categories = [ "cryptography", "command-line-utilities" ]
 license = "MIT"
 edition = "2018"
 
@@ -38,3 +39,13 @@ serde_derive = "1"
 escargot = "0.2"
 assert_fs = "0.3"
 assert_cmd = "0.6"
+
+[badges]
+travis-ci = { repository = "quininer/ene" }
+appveyor = { repository = "quininer/ene" }
+
+[badges.maintenance]
+status = "experimental"
+
+[profile.release]
+lto = true
