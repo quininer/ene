@@ -9,6 +9,10 @@ use crate::error::ProtoError;
 pub struct Aes128Colm0;
 
 impl AeadCipher for Aes128Colm0 {
+    fn name(&self) -> &'static str {
+        "Aes128Colm0"
+    }
+
     fn key_length(&self) -> usize { KEY_LENGTH }
     fn nonce_length(&self) -> usize { NONCE_LENGTH }
     fn tag_length(&self) -> usize { BLOCK_LENGTH }

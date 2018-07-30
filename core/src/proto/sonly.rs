@@ -11,6 +11,8 @@ pub fn send<SIG: Signature>(
     message: &[u8]
 ) -> SIG::Signature {
     let mut hasher = Sha3_512::default();
+    hasher.input(b"SONLY");
+    hasher.input(SIG::NAME.as_bytes());
     hasher.input(id.as_bytes());
     hasher.input(Sha3_512::digest(aad).as_slice());
     hasher.input(Sha3_512::digest(message).as_slice());
@@ -24,6 +26,8 @@ pub fn recv<SIG: Signature>(
     message: &[u8]
 ) -> Result<(), ProtoError> {
     let mut hasher = Sha3_512::default();
+    hasher.input(b"SONLY");
+    hasher.input(SIG::NAME.as_bytes());
     hasher.input(id.as_bytes());
     hasher.input(Sha3_512::digest(aad).as_slice());
     hasher.input(Sha3_512::digest(message).as_slice());

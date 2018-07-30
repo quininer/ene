@@ -7,6 +7,10 @@ use crate::error::ProtoError;
 pub struct NorxMRS;
 
 impl AeadCipher for NorxMRS {
+    fn name(&self) -> &'static str {
+        "NorxMRS"
+    }
+
     fn key_length(&self) -> usize { NorxMrs::KEY_LENGTH }
     fn nonce_length(&self) -> usize { NorxMrs::NONCE_LENGTH }
     fn tag_length(&self) -> usize { NorxMrs::TAG_LENGTH }

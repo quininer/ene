@@ -44,6 +44,9 @@ pub fn send<
 
     let m = KEX::exchange_to(rng, &mut kexkey, pk)?;
     let mut hasher = Shake256::default();
+    hasher.process(b"SIGAE");
+    hasher.process(SIG::NAME.as_bytes());
+    hasher.process(KEX::NAME.as_bytes());
     hasher.process(&kexkey);
     let mut xof = hasher.xof_result();
     xof.read(&mut aekey);
@@ -97,6 +100,9 @@ pub fn recv<
 
     KEX::exchange_from(&mut kexkey, sk, m)?;
     let mut hasher = Shake256::default();
+    hasher.process(b"SIGAE");
+    hasher.process(SIG::NAME.as_bytes());
+    hasher.process(KEX::NAME.as_bytes());
     hasher.process(&kexkey);
     let mut xof = hasher.xof_result();
 

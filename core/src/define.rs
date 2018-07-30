@@ -37,6 +37,7 @@ pub trait KeyExchange {
 }
 
 pub trait AeadCipher {
+    fn name(&self) -> &'static str;
     fn key_length(&self) -> usize;
     fn nonce_length(&self) -> usize;
     fn tag_length(&self) -> usize;

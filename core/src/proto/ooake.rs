@@ -20,7 +20,7 @@ use digest::{ Input, ExtendableOutput, XofReader };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::scalar::Scalar;
 use crate::key::ristrettodh::{ self, SecretKey, PublicKey };
-use crate::define::AeadCipher;
+use crate::define::{ AeadCipher, KeyExchange };
 use crate::error::ProtoError;
 
 
@@ -51,6 +51,9 @@ pub fn send<RNG: RngCore + CryptoRng>(
     let k = bb * (a + e * x);
 
     let mut hasher = Shake256::default();
+    hasher.process(b"OOAKE");
+    hasher.process(ristrettodh::RistrettoDH::NAME.as_bytes());
+    hasher.process(aead.name().as_bytes());
     hasher.process(k.compress().as_bytes());
     let mut xof = hasher.xof_result();
     xof.read(&mut aekey);
@@ -84,6 +87,9 @@ pub fn recv(
     let k = aa * b + xx * (e * b);
 
     let mut hasher = Shake256::default();
+    hasher.process(b"OOAKE");
+    hasher.process(ristrettodh::RistrettoDH::NAME.as_bytes());
+    hasher.process(aead.name().as_bytes());
     hasher.process(k.compress().as_bytes());
     let mut xof = hasher.xof_result();
     xof.read(&mut aekey);
