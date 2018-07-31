@@ -34,6 +34,11 @@ ttyaskpass = { git = "https://github.com/quininer/ttyaskpass", branch = "mortal"
 
 sled = "0.15"
 
+[build-dependencies]
+clap = "2"
+structopt = "0.2"
+ene-core = { path = "./core" }
+
 [dev-dependencies]
 serde_derive = "1"
 escargot = "0.2"
