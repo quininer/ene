@@ -24,6 +24,7 @@ use sha3::{ Sha3_512, Shake256 };
 use digest::{ Input, ExtendableOutput, XofReader };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::scalar::Scalar;
+use seckey::TempKey;
 use crate::key::ristrettodh::{ self, SecretKey, PublicKey };
 use crate::define::{ AeadCipher, KeyExchange };
 use crate::error::ProtoError;
@@ -40,6 +41,7 @@ pub fn send<RNG: RngCore + CryptoRng>(
     plaintext: &[u8]
 ) -> Result<(Message, Vec<u8>), ProtoError> {
     let mut aekey = vec![0; aead.key_length()];
+    let mut aekey = TempKey::from(&mut aekey[..]);
     let mut nonce = vec![0; aead.nonce_length()];
 
     let x = Scalar::random(rng);
@@ -79,6 +81,7 @@ pub fn recv(
     ciphertext: &[u8]
 ) -> Result<Vec<u8>, ProtoError> {
     let mut aekey = vec![0; aead.key_length()];
+    let mut aekey = TempKey::from(&mut aekey[..]);
     let mut nonce = vec![0; aead.nonce_length()];
 
     let mut hasher = Sha3_512::default();

@@ -12,6 +12,7 @@ extern crate ed25519_dalek;
 extern crate generic_array;
 extern crate aes;
 extern crate colm;
+extern crate seckey;
 extern crate serde;
 extern crate serde_bytes;
 extern crate semver;

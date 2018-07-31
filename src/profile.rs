@@ -7,6 +7,7 @@ use argon2rs::{ Argon2, Variant };
 use serde_bytes::ByteBuf;
 use serde_cbor as cbor;
 use directories::ProjectDirs;
+use seckey::{ SecKey, free };
 use crate::core::{ alg, key, Builder, Ene };
 use crate::core::format::{ PrivateKey, PublicKey, Envelope };
 use crate::opts::Profile;
@@ -45,6 +46,7 @@ impl Profile {
 
             let sk_packed: PrivateKey = cbor::from_reader(&mut File::open(&sk_path)?)?;
             let sk = askpass(|pass| open(pass.as_bytes(), &sk_packed))?;
+            let sk = sk.read();
             let (id, ..) = unwrap!(&sk_packed);
 
             if path.is_dir() {
@@ -100,7 +102,9 @@ pub fn init(
     };
 
     let mut rng = OsRng::new()?;
-    let ene = builder.generate(id, &mut rng);
+    let ene = SecKey::new(builder.generate(id, &mut rng))
+        .map_err(|_| err_msg("Secure alloc fail"))?;
+    let ene = ene.read();
     let sk_packed = askpass(|pass| seal(&mut rng, enc, id, pass.as_bytes(), ene.as_secret()))?;
 
     if !quiet {
@@ -139,7 +143,7 @@ pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::
     )))
 }
 
-pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<Ene, Error> {
+pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<SecKey<Ene>, Error> {
     let (id, enc, salt, c) = unwrap!(sk_packed);
     let aead = enc.take();
 
@@ -152,5 +156,9 @@ pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<Ene, Error> {
     aead.open(aekey, nonce, salt, c, &mut sk_encoded)?;
 
     let sk = cbor::from_slice(&sk_encoded)?;
-    Ok(Ene::from(id, sk))
+    let sk = Ene::from(id, sk);
+    SecKey::new(sk).map_err(|ene| {
+        free(ene);
+        err_msg("Secure alloc fail")
+    })
 }

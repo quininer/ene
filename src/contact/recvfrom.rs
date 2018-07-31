@@ -61,6 +61,7 @@ impl RecvFrom {
 
         // decrypt sk
         let sk = askpass(|pass| profile::open(pass.as_bytes(), &sk_packed))?;
+        let sk = sk.read();
 
         if let Some((receiver_id, receiver_pk)) = r {
             let (id, ..) = unwrap!(&sk_packed);

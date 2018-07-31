@@ -40,6 +40,7 @@ impl SendTo {
 
         // decrypt sk
         let sk = askpass(|pass| profile::open(pass.as_bytes(), &sk_packed))?;
+        let sk = sk.read();
 
         // encrypt message
         let message_packed = sk.and(&receiver_id, &receiver_pk)
