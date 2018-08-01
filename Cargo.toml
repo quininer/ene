@@ -46,6 +46,9 @@ escargot = "0.2"
 assert_fs = "0.3"
 assert_cmd = "0.6"
 
+[patch.crates-io]
+terminfo = { git = "https://github.com/meh/rust-terminfo" }
+
 [badges]
 travis-ci = { repository = "quininer/ene" }
 appveyor = { repository = "quininer/ene" }

@@ -34,28 +34,28 @@ arg_enum! {
 
 #[derive(Debug, StructOpt)]
 pub enum SubCommand {
-    /// Manage Profile
+    /// Manage profile
     #[structopt(
         name = "profile", display_order = 1,
         raw(group = "arg_group(\"operate\")")
     )]
     Profile(Profile),
 
-    /// Manage Contact
+    /// Manage contact
     #[structopt(
         name = "contact", display_order = 2,
         raw(group = "arg_group(\"contact\")")
     )]
     Contact(Contact),
 
-    /// Encrypt Message
+    /// Encrypt message
     #[structopt(
         name = "sendto", display_order = 3,
         raw(group = "arg_group(\"recipient\")")
     )]
     SendTo(SendTo),
 
-    /// Decrypt Message
+    /// Decrypt message
     #[structopt(
         name = "recvfrom", display_order = 4,
         raw(group = "arg_group(\"sender\")")
@@ -65,7 +65,7 @@ pub enum SubCommand {
 
 #[derive(Debug, StructOpt)]
 pub struct Profile {
-    /// Initializes a Profile
+    /// Initialize a Profile
     #[structopt(
         long = "init",
         group = "operate", requires = "id",
