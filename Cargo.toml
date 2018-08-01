@@ -31,7 +31,7 @@ structopt = "0.2"
 directories = "1"
 termcolor = "1"
 ttyaskpass = { git = "https://github.com/quininer/ttyaskpass", branch = "mortal" }
-seckey = { version = "0.10", features = [ "nightly" ] }
+seckey = { version = "^0.9.1", features = [ "nightly" ] }
 
 sled = "0.15"
 
