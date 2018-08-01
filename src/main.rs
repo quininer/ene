@@ -11,6 +11,7 @@ extern crate serde_cbor;
 extern crate directories;
 extern crate termcolor;
 extern crate sled;
+extern crate seckey;
 extern crate ttyaskpass;
 extern crate ene_core as core;
 

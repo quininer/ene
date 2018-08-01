@@ -20,11 +20,12 @@ digest = "0.7"
 subtle = "0.7"
 curve25519-dalek = { version = "0.19", features = [ "avx2_backend", "serde" ] }
 ed25519-dalek = { version = "0.8", features = [ "avx2_backend", "serde" ] }
-sarkara = { version = "=0.10.0-alpha.2", features = [ "simd", "serde" ], optional = true }
+sarkara = { version = "=0.10.0-alpha.4", features = [ "simd", "serde" ], optional = true }
 
 generic-array = "0.9"
 colm = "0.1"
 aes = "0.2"
+seckey = { version = "0.9", features = [ "nightly" ] }
 
 serde = "1.0"
 serde_derive = "1.0"

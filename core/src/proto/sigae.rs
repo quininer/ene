@@ -22,6 +22,7 @@
 use rand::{ Rng, CryptoRng };
 use sha3::{ Sha3_512, Shake256 };
 use digest::{ Digest, Input, ExtendableOutput, XofReader };
+use seckey::TempKey;
 use crate::key::ed25519;
 use crate::define::{ Packing, Signature, KeyExchange, AeadCipher };
 use crate::error::ProtoError;
@@ -47,7 +48,9 @@ pub fn send<
     flag: bool
 ) -> Result<(Message<KEX>, Vec<u8>), ProtoError> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
+    let mut kexkey = TempKey::from(&mut kexkey[..]);
     let mut aekey = vec![0; aead.key_length()];
+    let mut aekey = TempKey::from(&mut aekey[..]);
     let mut nonce = vec![0; aead.nonce_length()];
     let ida = ida.as_bytes();
     let idb = idb.as_bytes();
@@ -103,7 +106,9 @@ pub fn recv<
     flag: bool
 ) -> Result<Vec<u8>, ProtoError> {
     let mut kexkey = vec![0; KEX::SHARED_LENGTH];
+    let mut kexkey = TempKey::from(&mut kexkey[..]);
     let mut aekey = vec![0; aead.key_length()];
+    let mut aekey = TempKey::from(&mut aekey[..]);
     let mut nonce = vec![0; aead.nonce_length()];
     let ida = ida.as_bytes();
     let idb = idb.as_bytes();
