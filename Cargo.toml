@@ -43,11 +43,11 @@ ene-core = { path = "./core" }
 [dev-dependencies]
 serde_derive = "1"
 escargot = "0.2"
-assert_fs = "0.3"
-assert_cmd = "0.6"
+assert_fs = "0.9"
+assert_cmd = "0.9"
 
 [patch.crates-io]
-terminfo = { git = "https://github.com/meh/rust-terminfo" }
+terminfo = { git = "https://github.com/meh/rust-terminfo", rev = "abb548b47dab42c4354c6088cf5695c6d4454ed9" }
 
 [badges]
 travis-ci = { repository = "quininer/ene" }

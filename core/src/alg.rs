@@ -75,7 +75,7 @@ impl Encrypt {
         ]
     }
 
-    pub fn take(&self) -> &'static dyn AeadCipher {
+    pub fn take(self) -> &'static dyn AeadCipher {
         match self {
             Encrypt::Aes128Colm0 => &Aes128Colm0,
             #[cfg(feature = "post-quantum")] Encrypt::NorxMRS => &NorxMRS

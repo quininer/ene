@@ -17,7 +17,11 @@ ENE will provide:
 * Deniable authentication
 * Mail Integrity
 * Nonce-misuse Resistant AEAD
-* Post-quantum Key Exchange
+* Experimental Post-quantum Key Exchange
+
+## Warnings
+
+ENE is experimental!
 
 ## Build
 
@@ -37,8 +41,11 @@ You can add a feature flag to enable post-quantum support.
 ## Usage
 
 ```
-# initialize your profile.
+# Initialize your profile.
 > ene profile <your id> --init
+
+# Export your pubkey
+> ene profile --export-pubkey ./<path>
 
 # Add contact
 > ene contact --import ./<your friend's pubkey file>

@@ -32,7 +32,7 @@ impl SecretKey {
 
 impl PublicKey {
     pub fn from_secret(SecretKey(sk): &SecretKey) -> PublicKey {
-        PublicKey(sk.public.clone())
+        PublicKey(sk.public)
     }
 }
 

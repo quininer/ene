@@ -1,5 +1,6 @@
 //! Trait define
 
+use failure::Fail;
 use rand::{ Rng, CryptoRng };
 use serde::{ Serialize, Deserialize };
 use crate::error::{ self, ProtoError };
@@ -49,7 +50,7 @@ pub trait AeadCipher {
 }
 
 pub trait Serde {
-    type Error;
+    type Error: Fail;
 
     fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, error::Error<Self::Error>>;
 

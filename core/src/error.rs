@@ -2,11 +2,12 @@
 
 use std::borrow::Cow;
 use std::option::NoneError;
+use failure::Fail;
 
 
 /// Core Error
 #[derive(Debug, Fail)]
-pub enum Error<E> {
+pub enum Error<E: Fail> {
     #[fail(display = "Protocol Error: {}", _0)]
     Proto(ProtoError),
 
@@ -48,19 +49,19 @@ pub enum ParseError {
     NotAvailable(Cow<'static, str>)
 }
 
-impl<E> From<rand::Error> for Error<E> {
+impl<E: failure::Fail + Sync + Send + 'static> From<rand::Error> for Error<E> {
     fn from(err: rand::Error) -> Error<E> {
         Error::Rand(err)
     }
 }
 
-impl<E> From<ProtoError> for Error<E> {
+impl<E: failure::Fail + Sync + Send + 'static> From<ProtoError> for Error<E> {
     fn from(err: ProtoError) -> Error<E> {
         Error::Proto(err)
     }
 }
 
-impl<E> From<ParseError> for Error<E> {
+impl<E: failure::Fail + Sync + Send + 'static> From<ParseError> for Error<E> {
     fn from(err: ParseError) -> Error<E> {
         Error::Parse(err)
     }

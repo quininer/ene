@@ -46,7 +46,7 @@ impl Termination for Exit<Error> {
                 let _ = stdio.eprint(|stderr| -> io::Result<()> {
                     writeln!(stderr, "error:")?;
                     writeln!(stderr, "\t{}", err)?;
-                    for cause in err.causes().skip(1) {
+                    for cause in err.iter_chain().skip(1) {
                         writeln!(stderr, "\t{}", cause)?;
                     }
 
