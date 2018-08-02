@@ -11,6 +11,9 @@ PGP has been used for message encryption for years,
 but with the evolution of cryptography, part of PGP has become obsolete.
 ENE wants to be a more modern alternative.
 
+You can find an introduction in [here](https://dexhunter.github.io/cryptograph/toolkit/2018/08/02/ENE-Introduction.html)
+([原文](https://quininer.github.io/?ene)).
+
 ENE will provide:
 
 * Authenticated Key Exchange
@@ -25,14 +28,14 @@ ENE is experimental!
 
 ## Build
 
-ENE is written in nightly Rust,
-install the Rust nightly toolchain in any way, then you just need
+ENE is written in nightly Rust.
+Install the Rust nightly toolchain in any way, then you just need
 
 ```
 > env RUSTFLAGS="-C target-feature=+ssse3,+avx2,+aes" cargo build --release
 ```
 
-You can add a feature flag to enable post-quantum support.
+You can add a feature flag to enable experimental post-quantum support.
 
 ```
 > env RUSTFLAGS="-C target-feature=+ssse3,+avx2,+aes" cargo build --features post-quantum --release
