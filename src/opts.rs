@@ -218,6 +218,10 @@ pub struct RecvFrom {
     #[structopt(short = "a", long = "associated-data", value_name = "STRING")]
     pub associated_data: Option<String>,
 
+    /// Plaintext, Sonly protocol
+    #[structopt(long = "plaintext", value_name = "PATH", parse(from_os_str))]
+    pub plaintext: Option<PathBuf>,
+
     /// Force decrypt
     #[structopt(short = "f", long = "force", group = "sender")]
     pub force: bool,

@@ -3,6 +3,7 @@ use std::fs::{ self, File };
 use failure::{ Fallible, err_msg };
 use serde_cbor as cbor;
 use directories::ProjectDirs;
+use crate::core::alg;
 use crate::core::format::{ PrivateKey, PublicKey, Message, Meta };
 use crate::{ profile, opts::RecvFrom };
 use crate::common::{ Cbor, Stdio, askpass };
@@ -77,8 +78,19 @@ impl RecvFrom {
         }
 
         // decrypt message
-        let message = sk.and(&sender_id, &sender_pk)
-            .recvfrom::<Cbor>(&proto, aad.as_bytes(), &message_encrypted)?;
+        let message = if let alg::Protocol::Sonly(..) = proto {
+            let plaintext = if let Some(path) = self.plaintext {
+                Some(fs::read(path)?)
+            } else {
+                None
+            };
+
+            sk.and(&sender_id, &sender_pk)
+                .recvfrom::<Cbor>(&proto, aad.as_bytes(), &message_encrypted, plaintext.as_ref().map(Vec::as_slice))?
+        } else {
+            sk.and(&sender_id, &sender_pk)
+                .recvfrom::<Cbor>(&proto, aad.as_bytes(), &message_encrypted, None)?
+        };
 
         if !quiet {
             stdio.info(format_args!("sender: {}", sender_id))?;

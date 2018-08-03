@@ -221,7 +221,7 @@ impl<'a> And<'a> {
         Ok(Envelope::from((meta, proto.clone(), msg)))
     }
 
-    pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8])
+    pub fn recvfrom<DE: Serde>(&self, proto: &Protocol, aad: &[u8], message: &[u8], plaintext: Option<&[u8]>)
         -> Result<Vec<u8>, error::Error<DE::Error>>
     {
         let And {
@@ -234,7 +234,7 @@ impl<'a> And<'a> {
                 let msg: sonly::Message<Ed25519> = DE::from_slice(message)?;
 
                 let sig_pk = try_unwrap!(&pka.ed25519; Ed25519::NAME);
-                sonly::recv::<Ed25519>((ida, sig_pk), &msg, aad, message)?;
+                sonly::recv::<Ed25519>((ida, sig_pk), &msg, aad, plaintext.unwrap_or(b""))?;
 
                 Ok(Vec::new())
             },

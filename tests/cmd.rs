@@ -81,5 +81,32 @@ fn test_cmd() -> Result<(), Error> {
 
     assert_eq!(assert.get_output().stdout, msg.as_bytes());
 
+
+    // sign
+
+    // bob sendto alice
+    Command::new(&bin)
+        .arg("sendto")
+        .arg("--profile").arg(tempdir.path().join("bob.ene"))
+        .arg("--recipient-pubkey").arg("./tests/common/alice.pk.ene")
+        .arg("--protocol").arg("sonly-ed25519")
+        .arg("--associated-data").arg(title)
+        .arg("--input").arg(tempdir.path().join("plaintext.txt"))
+        .arg("--output").arg(tempdir.path().join("ciphertext.msg.ene"))
+        .assert()
+        .success();
+
+    // alice recvfrom bob
+    Command::new(&bin)
+        .arg("-q")
+        .arg("recvfrom")
+        .arg("--profile").arg("./tests/common/alice.ene")
+        .arg("--sender-pubkey").arg(tempdir.path().join("bob.pk.ene"))
+        .arg("--associated-data").arg(title)
+        .arg("--input").arg(tempdir.path().join("ciphertext.msg.ene"))
+        .arg("--plaintext").arg(tempdir.path().join("plaintext.txt"))
+        .assert()
+        .success();
+
     Ok(())
 }

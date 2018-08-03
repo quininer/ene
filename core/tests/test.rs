@@ -38,7 +38,7 @@ fn test_ooake_dhaes128colm0() {
     let Envelope(_, v, (_, proto, enemsg)) = enemsg;
     assert_eq!(v, Version::default());
     let msg2 = bob_sk.and(alice, &alice_pk)
-        .recvfrom::<Cbor>(&proto, title.as_bytes(), &enemsg).unwrap();
+        .recvfrom::<Cbor>(&proto, title.as_bytes(), &enemsg, None).unwrap();
 
     assert_eq!(msg2, msg.as_bytes());
 }
@@ -73,7 +73,7 @@ fn test_sigae_ed25519dhaes128colm0() {
     let Envelope(_, v, (_, proto, enemsg)) = enemsg;
     assert_eq!(v, Version::default());
     let msg2 = bob_sk.and(alice, &alice_pk)
-        .recvfrom::<Cbor>(&proto, title.as_bytes(), &enemsg).unwrap();
+        .recvfrom::<Cbor>(&proto, title.as_bytes(), &enemsg, None).unwrap();
 
     assert_eq!(msg2, msg.as_bytes());
 }
