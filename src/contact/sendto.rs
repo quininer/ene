@@ -1,5 +1,5 @@
 use std::fs::{ self, File };
-use failure::{ Error, err_msg };
+use failure::{ Fallible, err_msg };
 use serde_cbor as cbor;
 use directories::ProjectDirs;
 use crate::core::format::{ PrivateKey, PublicKey };
@@ -9,7 +9,7 @@ use super::db::Db;
 
 
 impl SendTo {
-    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Fallible<()> {
         // take receiver
         let (receiver_id, receiver_pk) = if let Some(ref pk_path) = self.recipient_pubkey {
             let pk_packed: PublicKey = cbor::from_reader(&mut File::open(pk_path)?)?;

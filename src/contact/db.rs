@@ -1,7 +1,7 @@
 use std::fs;
 use std::mem::ManuallyDrop;
 use std::path::{ Path, PathBuf };
-use failure::{ Error, err_msg };
+use failure::{ Fallible, err_msg };
 use serde_cbor as cbor;
 use sled::{ ConfigBuilder, Tree, Iter };
 use crate::core::key;
@@ -21,7 +21,7 @@ macro_rules! check_lock {
 }
 
 impl Db {
-    pub fn new(path: &Path) -> Result<Db, Error> {
+    pub fn new(path: &Path) -> Fallible<Db> {
         let config = ConfigBuilder::new()
             .path(path)
             .build();
@@ -37,7 +37,7 @@ impl Db {
         })
     }
 
-    pub fn get(&self, id: &str) -> Result<Option<key::PublicKey>, Error> {
+    pub fn get(&self, id: &str) -> Fallible<Option<key::PublicKey>> {
         if let Some(value) = self.tree.get(id.as_bytes())? {
             Ok(Some(cbor::from_slice(&value)?))
         } else {
@@ -45,14 +45,14 @@ impl Db {
         }
     }
 
-    pub fn set(&self, id: &str, pk: &key::PublicKey) -> Result<(), Error> {
+    pub fn set(&self, id: &str, pk: &key::PublicKey) -> Fallible<()> {
         let id = id.to_string().into_bytes();
         let pk = cbor::to_vec(pk)?;
 
         self.tree.set(id, pk).map_err(Into::into)
     }
 
-    pub fn del(&self, id: &str) -> Result<(), Error> {
+    pub fn del(&self, id: &str) -> Fallible<()> {
         self.tree.del(id.as_bytes())
             .map(drop)
             .map_err(Into::into)
@@ -70,7 +70,7 @@ pub struct Filter<'a, 'b> {
 }
 
 impl Iterator for Filter<'a, 'b> {
-    type Item = Result<(String, key::PublicKey), Error>;
+    type Item = Fallible<(String, key::PublicKey)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         macro_rules! try_some {

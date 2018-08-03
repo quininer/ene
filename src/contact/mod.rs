@@ -3,7 +3,7 @@ mod sendto;
 mod recvfrom;
 
 use std::fs::File;
-use failure::{ Error, err_msg };
+use failure::{ Fallible, err_msg };
 use directories::ProjectDirs;
 use serde_cbor as cbor;
 use crate::core::format::{ PublicKey, Envelope };
@@ -13,7 +13,7 @@ use self::db::Db;
 
 
 impl Contact {
-    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Fallible<()> {
         let db_path = dir.data_local_dir().join("sled");
         let db = Db::new(&db_path)?;
 

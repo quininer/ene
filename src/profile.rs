@@ -2,7 +2,7 @@ use std::path::Path;
 use std::str::FromStr;
 use std::fs::{ self, File };
 use rand::{ Rng, OsRng };
-use failure::{ Error, err_msg };
+use failure::{ Fallible, err_msg };
 use argon2rs::{ Argon2, Variant };
 use serde_bytes::ByteBuf;
 use serde_cbor as cbor;
@@ -15,7 +15,7 @@ use crate::common::{ Stdio, askpass };
 
 
 impl Profile {
-    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Result<(), Error> {
+    pub fn exec(self, dir: &ProjectDirs, quiet: bool, stdio: &mut Stdio) -> Fallible<()> {
         let mut sk_path = dir.data_local_dir().join("key.ene");
 
         if self.init {
@@ -94,7 +94,7 @@ pub fn init(
     id: &str,
     algorithms: Option<&str>, enc: alg::Encrypt,
     output: &Path
-) -> Result<(), Error> {
+) -> Fallible<()> {
     let builder = if let Some(algorithms) = algorithms {
         Builder::from_str(algorithms)?
     } else {
@@ -121,7 +121,7 @@ pub fn init(
     Ok(())
 }
 
-pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::SecretKey) -> Result<PrivateKey, Error> {
+pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::SecretKey) -> Fallible<PrivateKey> {
     let aead = enc.take();
 
     let mut salt = vec![0; 16];
@@ -143,7 +143,7 @@ pub fn seal(rng: &mut OsRng, enc: alg::Encrypt, id: &str, key: &[u8], sk: &key::
     )))
 }
 
-pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Result<SecKey<Ene>, Error> {
+pub fn open(key: &[u8], sk_packed: &PrivateKey) -> Fallible<SecKey<Ene>> {
     let (id, enc, salt, c) = unwrap!(sk_packed);
     let aead = enc.take();
 

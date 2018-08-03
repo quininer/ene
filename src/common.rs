@@ -1,7 +1,7 @@
 use std::{ env, fmt };
 use std::io::{ self, Write };
 use std::process::{ Command, Termination, ExitCode };
-use failure::Error;
+use failure::{ Fallible, Error };
 use serde::{ Serialize, Deserialize };
 use serde_cbor as cbor;
 use serde_cbor::error::Error as CborError;
@@ -65,8 +65,8 @@ impl Termination for Exit<Error> {
 
 
 pub fn askpass<F, T>(f: F)
-    -> Result<T, Error>
-    where F: FnOnce(&str) -> Result<T, Error>
+    -> Fallible<T>
+    where F: FnOnce(&str) -> Fallible<T>
 {
     const PROMPT: &str = "Password:";
 

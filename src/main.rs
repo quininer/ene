@@ -21,7 +21,7 @@ mod profile;
 mod contact;
 
 use std::fs;
-use failure::{ Error, err_msg };
+use failure::{ Fallible, Error, err_msg };
 use structopt::StructOpt;
 use directories::ProjectDirs;
 use crate::common::{ Exit, Stdio };
@@ -29,7 +29,7 @@ use crate::opts::{ Options, SubCommand };
 
 
 #[inline]
-fn start(quiet: bool, subcommand: SubCommand, stdio: &mut Stdio) -> Result<(), Error> {
+fn start(quiet: bool, subcommand: SubCommand, stdio: &mut Stdio) -> Fallible<()> {
     let dir = ProjectDirs::from("", "", "ENE")
         .ok_or_else(|| err_msg("not found project dir"))?;
 
