@@ -41,8 +41,7 @@ structopt = "0.2"
 ene-core = { path = "./core" }
 
 [dev-dependencies]
-serde_derive = "1"
-escargot = "0.2"
+escargot = "0.3"
 assert_fs = "0.9"
 assert_cmd = "0.9"
 

@@ -1,33 +1,33 @@
 #![cfg(feature = "post-quantum")]
 
-#[macro_use] extern crate serde_derive;
 extern crate rand;
 extern crate failure;
-extern crate serde;
 extern crate escargot;
 extern crate assert_fs;
 extern crate assert_cmd;
 
-mod common;
-
 use std::{ fs, env };
-use std::process::Command;
 use rand::{ Rng, thread_rng, distributions::Alphanumeric };
-use failure::Error;
+use failure::Fallible;
+use escargot::CargoBuild;
 use assert_fs::TempDir;
 use assert_cmd::prelude::*;
 
 
 #[test]
-fn test_cmd() -> Result<(), Error> {
-    let askpass = common::example("dummy_askpass")?;
-    env::set_var("ENE_ASKPASS", askpass);
+fn test_cmd() -> Fallible<()> {
+    let askpass = CargoBuild::new()
+        .example("dummy_askpass")
+        .run()?;
+    env::set_var("ENE_ASKPASS", askpass.path());
 
     let tempdir = TempDir::new()?;
-    let bin = common::main(&["--features", "post-quantum"])?;
+    let bin = CargoBuild::new()
+        .arg("--features").arg("post-quantum")
+        .run()?;
 
     // bob generate privkey
-    Command::new(&bin)
+    bin.command()
         .arg("profile")
         .arg("bob@core.ene").arg("--init")
         .arg("--choose-pubkey").arg("ed25519,kyber")
@@ -36,7 +36,7 @@ fn test_cmd() -> Result<(), Error> {
         .success();
 
     // bob export pubkey
-    Command::new(&bin)
+    bin.command()
         .arg("profile")
         .arg("--profile").arg(tempdir.path().join("bob.ene"))
         .arg("--export-pubkey").arg(tempdir.path().join("bob.pk.ene"))
@@ -51,7 +51,7 @@ fn test_cmd() -> Result<(), Error> {
     fs::write(tempdir.path().join("plaintext.txt"), &msg)?;
 
     // bob sendto alice
-    Command::new(&bin)
+    bin.command()
         .arg("sendto")
         .arg("--profile").arg(tempdir.path().join("bob.ene"))
         .arg("--protocol").arg("sigae+-ed25519-kyber-norxmrs")
@@ -63,7 +63,7 @@ fn test_cmd() -> Result<(), Error> {
         .success();
 
     // alice recvfrom bob
-    let assert = Command::new(&bin)
+    let assert = bin.command()
         .arg("-q")
         .arg("recvfrom")
         .arg("--profile").arg("./tests/common/alice.ene")
