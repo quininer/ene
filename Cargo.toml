@@ -22,7 +22,7 @@ argon2rs = { version = "0.2", features = [ "simd" ] }
 rand = "0.5"
 serde = "1"
 serde_bytes = "0.10"
-serde_cbor = "0.8"
+serde_cbor = "0.9"
 
 failure = "0.1"
 clap = "2"

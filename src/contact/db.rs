@@ -58,7 +58,7 @@ impl Db {
             .map_err(Into::into)
     }
 
-    pub fn filter(&'a self, start: &'b str) -> Filter<'a, 'b> {
+    pub fn filter<'a, 'b>(&'a self, start: &'b str) -> Filter<'a, 'b> {
         let iter = self.tree.scan(start.as_bytes());
         Filter { iter, start }
     }
@@ -69,7 +69,7 @@ pub struct Filter<'a, 'b> {
     start: &'b str
 }
 
-impl Iterator for Filter<'a, 'b> {
+impl<'a, 'b> Iterator for Filter<'a, 'b> {
     type Item = Fallible<(String, key::PublicKey)>;
 
     fn next(&mut self) -> Option<Self::Item> {

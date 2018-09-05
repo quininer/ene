@@ -35,4 +35,4 @@ semver = "0.9"
 siphasher = "0.2"
 
 [dev-dependencies]
-serde_cbor = "0.8"
+serde_cbor = "0.9"

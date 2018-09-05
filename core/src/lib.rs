@@ -1,4 +1,4 @@
-#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait, const_fn, raw_identifiers)]
+#![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait, const_fn)]
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate arrayref;
