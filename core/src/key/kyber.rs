@@ -1,4 +1,5 @@
 use rand::{ Rng, CryptoRng };
+use serde_derive::{ Serialize, Deserialize };
 use sarkara::kex::{ CheckedExchange, KeyExchange as KeyExchange2, kyber };
 use sarkara::Packing as _;
 use crate::define::{ Packing, KeyExchange };

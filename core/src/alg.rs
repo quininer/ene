@@ -1,6 +1,7 @@
 //! Algorithm
 
 use std::str::FromStr;
+use serde_derive::{ Serialize, Deserialize };
 use crate::key;
 use crate::error::ParseError;
 use crate::define::AeadCipher;

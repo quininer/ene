@@ -1,5 +1,6 @@
 use std::path::PathBuf;
-use structopt::clap::ArgGroup;
+use structopt::StructOpt;
+use structopt::clap::{ arg_enum, _clap_count_exprs, ArgGroup };
 use crate::core::alg::{ self, Protocol };
 
 

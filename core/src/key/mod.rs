@@ -5,6 +5,7 @@ pub mod ristrettodh;
 #[cfg(feature = "post-quantum")] pub mod kyber;
 
 use std::fmt;
+use serde_derive::{ Serialize, Deserialize };
 use crate::format::Short;
 use crate::define::{ Signature, KeyExchange };
 use self::ed25519::Ed25519;

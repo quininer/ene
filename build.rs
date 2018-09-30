@@ -1,13 +1,10 @@
-#[macro_use] extern crate clap;
-#[macro_use] extern crate structopt;
-extern crate ene_core as core;
-
 #[path = "src/opts.rs"]
 mod opts;
 
 use std::env;
 use clap::Shell;
 use structopt::StructOpt;
+use ene_core as core;
 use self::opts::Options;
 
 

@@ -2,7 +2,7 @@
 
 use std::fmt;
 use rand::{ Rng, CryptoRng };
-use serde::{ Deserialize, Deserializer };
+use serde::{ Serialize, Deserialize, Deserializer };
 use serde::de::{ self, Visitor };
 use sha3::Sha3_512;
 use ed25519_dalek::{

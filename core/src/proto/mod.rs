@@ -4,6 +4,7 @@ pub mod ooake;
 pub mod sigae;
 pub mod sonly;
 
+use serde_derive::{ Serialize, Deserialize };
 use crate::define::{ KeyExchange, Signature };
 
 

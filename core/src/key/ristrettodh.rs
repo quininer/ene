@@ -2,7 +2,7 @@
 
 use std::fmt;
 use rand::{ Rng, CryptoRng };
-use serde::{ Deserialize, Deserializer };
+use serde::{ Serialize, Deserialize, Deserializer };
 use serde::de::{ self, Visitor };
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::ristretto::{ RistrettoPoint, CompressedRistretto };

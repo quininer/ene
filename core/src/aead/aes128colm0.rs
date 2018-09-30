@@ -3,6 +3,7 @@
 //! * [COLM v1](https://competitions.cr.yp.to/round3/colmv1.pdf)
 
 use generic_array::GenericArray;
+use arrayref::{ array_ref, array_mut_ref };
 use aes::{ Aes128, block_cipher_trait::BlockCipher as _ };
 use colm::{ Colm, NONCE_LENGTH };
 use colm::traits::{ KEY_LENGTH, BLOCK_LENGTH, BlockCipher };

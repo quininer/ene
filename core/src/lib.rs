@@ -1,23 +1,5 @@
 #![feature(nll, non_exhaustive, underscore_imports, try_from, try_trait, const_fn)]
 
-#[macro_use] extern crate failure;
-#[macro_use] extern crate arrayref;
-#[macro_use] extern crate serde_derive;
-extern crate rand;
-extern crate subtle;
-extern crate sha3;
-extern crate digest;
-extern crate curve25519_dalek;
-extern crate ed25519_dalek;
-extern crate generic_array;
-extern crate aes;
-extern crate colm;
-extern crate seckey;
-extern crate serde;
-extern crate serde_bytes;
-extern crate semver;
-extern crate siphasher;
-
 #[cfg(feature = "post-quantum")]
 extern crate sarkara;
 

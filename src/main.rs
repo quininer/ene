@@ -1,20 +1,5 @@
 #![feature(nll, termination_trait_lib, process_exitcode_placeholder)]
 
-#[macro_use] extern crate clap;
-#[macro_use] extern crate structopt;
-extern crate argon2rs;
-extern crate rand;
-extern crate failure;
-extern crate serde;
-extern crate serde_bytes;
-extern crate serde_cbor;
-extern crate directories;
-extern crate termcolor;
-extern crate sled;
-extern crate seckey;
-extern crate ttyaskpass;
-extern crate ene_core as core;
-
 #[macro_use] mod common;
 mod opts;
 mod profile;
@@ -24,6 +9,7 @@ use std::fs;
 use failure::{ Fallible, Error, err_msg };
 use structopt::StructOpt;
 use directories::ProjectDirs;
+use ene_core as core;
 use crate::common::{ Exit, Stdio };
 use crate::opts::{ Options, SubCommand };
 

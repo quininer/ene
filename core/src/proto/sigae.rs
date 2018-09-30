@@ -20,6 +20,7 @@
 //! * [Internet-Draft Ephemeral Diffie-Hellman Over COSE](https://tools.ietf.org/html/draft-selander-ace-cose-ecdhe-07#page-3)
 
 use rand::{ Rng, CryptoRng };
+use serde_derive::{ Serialize, Deserialize };
 use sha3::{ Sha3_512, Shake256 };
 use digest::{ Digest, Input, ExtendableOutput, XofReader };
 use seckey::TempKey;
